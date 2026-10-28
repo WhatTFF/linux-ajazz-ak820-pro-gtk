@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: fedora:45
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            git gcc gcc-c++ make pkgconf-pkg-config \
+            rust cargo rustfmt clippy \
+            gtk3-devel gdk3-devel glib2-devel \
+            xorg-x11-server-Xvfb
+
+      - uses: actions/checkout@v4
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
+      - name: Build release
+        run: cargo build --release -p ak820-gtk -p ak820-cli
