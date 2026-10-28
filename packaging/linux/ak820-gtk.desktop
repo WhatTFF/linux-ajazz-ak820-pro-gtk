@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=AK820 Pro Studio
+GenericName=AK820 Pro keyboard screen studio
+Comment=Configure the AJAZZ / Epomaker AK820 Pro TFT screen
+Exec=ak820-gtk
+Icon=ak820-gtk
+Terminal=false
+Type=Application
+Categories=Settings;HardwareSettings;
+StartupNotify=true
+Keywords=ak820;ajazz;keyboard;screen;rgb;

@@ -21,6 +21,7 @@ keyboard clock in step with your system clock automatically.
 
 ## Download
 
+[![Download the RPM](https://img.shields.io/badge/download-.rpm-294172?style=for-the-badge&logo=fedora&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
 [![Download the DEB](https://img.shields.io/badge/download-.deb-A81D33?style=for-the-badge&logo=debian&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
 [![Download the AppImage](https://img.shields.io/badge/download-.AppImage-ff6a2b?style=for-the-badge&logo=appimage&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
 [![Download the source tarball](https://img.shields.io/badge/download-source-294172?style=for-the-badge&logo=github&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
@@ -30,6 +31,7 @@ packages above plus a `SHA256SUMS` file; the newest release is listed first.
 
 | Format | Distros | Install |
 | --- | --- | --- |
+| `.rpm` | Fedora, RHEL, openSUSE | `sudo dnf install ./ak820-gtk-*.rpm` |
 | `.deb` | Debian, Ubuntu, Mint, Pop!\_OS | `sudo apt install ./ak820-gtk_*.deb` |
 | `.AppImage` | any glibc distro, no root | `chmod +x ak820-gtk_*.AppImage && ./ak820-gtk_*.AppImage` |
 | source | any | `cargo build --release -p ak820-gtk -p ak820-cli` |
@@ -44,9 +46,6 @@ sudo udevadm control --reload && sudo udevadm trigger
 
 Then unplug and replug the keyboard so the new permissions apply.
 
-> **RPM:** not built for this release (RPM packaging is planned; COPR tracked in the upstream
-> project). Use the DEB, AppImage, or build from source in the meantime.
-
 ## Status
 
 Working on hardware (fw 1.07, PID `0c45:8009`):
@@ -58,8 +57,8 @@ Working on hardware (fw 1.07, PID `0c45:8009`):
   restore last image on connect, autosync interval, update checks
 - clock autosync units (`systemd/`), udev rule, DEB + AppImage packages
 
-Not done yet: RPM packaging, Flatpak, COPR, GIPHY key in the keyring,
-SQLite-backed history. See the upstream project's [PLAN.md](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app/blob/main/PLAN.md).
+Not done yet: Flatpak, COPR, GIPHY key in the keyring, SQLite-backed history. See the upstream
+project's [PLAN.md](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app/blob/main/PLAN.md).
 
 ## Install (from source, Fedora)
 
