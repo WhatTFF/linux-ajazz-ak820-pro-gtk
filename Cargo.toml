@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ak820-proto",
+    "crates/ak820-device",
+    "crates/ak820-store",
+    "crates/ak820-cli",
+    "apps/gtk",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk"
+rust-version = "1.85"
+
+[workspace.dependencies]
+ak820-proto = { path = "crates/ak820-proto" }
+ak820-device = { path = "crates/ak820-device" }
+ak820-store = { path = "crates/ak820-store" }
+
+[profile.release]
+lto = "thin"
+strip = true

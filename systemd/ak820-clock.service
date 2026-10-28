@@ -1,0 +1,12 @@
+[Unit]
+Description=Sync the AK820 Pro screen clock
+Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-app
+After=suspend.target hibernate.target hybrid-sleep.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ak820ctl time --quiet
+# A missing keyboard is normal (wireless mode, unplugged, GUI holds the lock):
+# ak820ctl exits 0 in that case.
+TimeoutStartSec=20
+Nice=10

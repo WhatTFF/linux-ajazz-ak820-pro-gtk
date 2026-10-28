@@ -1,0 +1,13 @@
+[Unit]
+Description=Resync the AK820 Pro clock after resume
+Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-app
+After=suspend.target hibernate.target hybrid-sleep.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ak820ctl time --quiet
+TimeoutStartSec=20
+Nice=10
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target

@@ -1,0 +1,13 @@
+[package]
+name = "ak820-proto"
+description = "AJAZZ / Epomaker AK820 Pro screen protocol: framing, animation payload, RGB565"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"

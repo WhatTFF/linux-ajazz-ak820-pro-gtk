@@ -1,0 +1,24 @@
+[package]
+name = "ak820-gtk"
+description = "GTK3 control app for the AJAZZ / Epomaker AK820 Pro TFT screen"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "ak820-gtk"
+path = "src/main.rs"
+
+[dependencies]
+ak820-proto.workspace = true
+ak820-device.workspace = true
+ak820-store.workspace = true
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+glib = { version = "0.10" }
+gtk = { version = "0.9" }
+image = { version = "0.25", default-features = false, features = ["gif", "jpeg", "png", "webp"] }
+
+[lints.rust]
+unsafe_code = "forbid"

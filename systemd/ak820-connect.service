@@ -1,0 +1,14 @@
+[Unit]
+Description=AK820 Pro just connected: sync clock and restore the last image
+Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-app
+# Started by udev (ENV{SYSTEMD_USER_WANTS}) when the keyboard appears.
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+# The clock first: it is cheap and always wanted.
+ExecStart=/usr/bin/ak820ctl time --quiet
+# Then the last animation, if the user enabled restore_on_connect.
+ExecStart=/usr/bin/ak820ctl restore-latest --quiet
+TimeoutStartSec=180
+Nice=10

@@ -1,0 +1,23 @@
+[package]
+name = "ak820-cli"
+description = "ak820ctl — command line control for the AJAZZ / Epomaker AK820 Pro screen"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "ak820ctl"
+path = "src/main.rs"
+
+[dependencies]
+ak820-proto.workspace = true
+ak820-device.workspace = true
+ak820-store.workspace = true
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+clap = { version = "4", features = ["derive"] }
+image = { version = "0.25", default-features = false, features = ["gif", "jpeg", "png", "webp"] }
+
+[lints.rust]
+unsafe_code = "forbid"
