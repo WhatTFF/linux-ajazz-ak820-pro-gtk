@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/security/advisories/new
+    about: Report privately, not in a public issue. See SECURITY.md.
+  - name: Setup and usage help
+    url: https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/blob/main/README.md#quick-start
+    about: The README covers packages, the udev rule, USB-C vs dongle, and clock sync.

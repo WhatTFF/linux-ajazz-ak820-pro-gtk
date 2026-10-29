@@ -77,6 +77,7 @@ pub fn install_command(kind: &str, path: &Path) -> String {
 }
 
 /// The command that removes this build.
+#[allow(dead_code)]
 pub fn uninstall_command() -> String {
     match package_kind() {
         "deb" => "sudo apt remove -y ak820-gtk".into(),
@@ -184,6 +185,7 @@ pub fn replace_appimage(url: &str) -> Result<String, String> {
 }
 
 /// Remove this app with the system package manager, or delete the AppImage.
+#[allow(dead_code)]
 pub fn uninstall() -> Result<String, String> {
     match package_kind() {
         "deb" | "rpm" => {

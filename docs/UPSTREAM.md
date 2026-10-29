@@ -1,38 +1,44 @@
 # Upstream tracking
 
-Vendored from **fromagge/ak820-screen** @ `9030b81` (2026-10-21), MIT.
+Portions are derived from **fromagge/ak820-screen** @ `9030b81` (2026-10-21), MIT.
+The GTK application and Rust transport are this project's implementation.
 
-Goal: keep the UI a *mechanical* copy so upstream commits can be merged by hand in minutes.
-
-## What is vendored
+## What is derived from upstream
 
 | Upstream path | Here | State |
 |---|---|---|
 | `PROTOCOL.md` | `PROTOCOL.md` | copied, status note prepended |
 | `70-ak820.rules` | `udev/70-ak820.rules` | copied + `systemd` tags for autosync |
-| `web/index.html` | `apps/desktop/ui/index.html` | verbatim (M2) |
-| `web/app.js` | `apps/desktop/ui/app.js` | patched: bootstrap, history, GIPHY, drag-drop |
-| `web/gen.js` | `apps/desktop/ui/gen.js` | verbatim |
-| `web/fx.js` | `apps/desktop/ui/fx.js` | verbatim |
-| `web/ak820.js` | `apps/desktop/ui/ipc.js` | transport replaced with Tauri commands; `buildPayload`/`parsePayload` kept verbatim |
+| `web/gen.js` | `apps/gtk/src/gen.rs` | ported generators, same parameters/visuals |
+| `web/fx.js` | `apps/gtk/src/fx.rs` | ported effects and text drawing |
+| `web/app.js` | `apps/gtk/src/main.rs` | GTK3 implementation of the same UI concepts |
 | `ak820.py` | — | behavioural reference only |
+
+The original Tauri UI is not vendored here. See
+[WhatTFF/linux-ajazz-ak820-pro-app](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app)
+for the WebKit version.
 
 ## Patch rules
 
-1. Never restructure upstream code. Patch points are marked with `// NATIVE:` comments so a
-   three-way merge stays possible.
-2. `buildPayload()` and `parsePayload()` must stay byte-identical; Rust golden tests compare
-   against fixtures generated from these functions.
-3. Any upstream change to `PROTOCOL.md` is reviewed before code changes — the wire format is the
-   contract.
+1. The protocol is the contract. Any upstream change to `PROTOCOL.md` is reviewed before code
+   changes.
+2. `crates/ak820-proto` golden tests must keep passing; payloads are compared against fixtures
+   generated from the upstream JavaScript.
+3. Generators and effects should stay visually equivalent to upstream. If a change needs a new
+   GTK control, add it to `show_gen_params` / the effects card rather than diverging silently.
 
 ## Sync procedure
 
 ```bash
 git remote add upstream https://github.com/fromagge/ak820-screen
 git fetch upstream
-git diff upstream/main -- web/ > /tmp/upstream-ui.diff
+git diff upstream/main -- web/gen.js web/fx.js PROTOCOL.md udev/70-ak820.rules \
+  > /tmp/upstream.diff
 ```
 
-Apply the hunks by hand into `apps/desktop/ui/`, run `cargo test -p ak820-proto` (golden vectors)
-and the UI parity screenshot job, then bump the commit hash in `NOTICE`.
+Apply the hunks by hand, run `cargo test --workspace`, then bump the commit hash in `NOTICE`.
+
+## License
+
+Upstream is MIT. This project is GPL-3.0-only. The MIT notice is preserved in
+[LICENSE-MIT](../LICENSE-MIT) and [NOTICE](../NOTICE).

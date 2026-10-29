@@ -415,6 +415,7 @@ struct Widgets {
     preview: Image,
     draw_canvas: Image,
     draw_area: EventBox,
+    dongle_banner: Box,
     msg: Label,
     frames_info: Label,
     size_info: Label,
@@ -424,14 +425,7 @@ struct Widgets {
     settings_btn: Button,
 
     dev_panel: Box,
-    dev_vid_pid: Label,
-    dev_firmware: Label,
-    dev_mode: Label,
-    dev_battery: Label,
-    dev_charging: Label,
-    dev_profile: Label,
-    dev_frames: Label,
-    dev_direction: Label,
+    dev_info: Label,
     sync_btn: Button,
     sync_status: Label,
     builtin_combo: ComboBoxText,
@@ -448,6 +442,7 @@ struct Widgets {
     giphy_entry: Entry,
     giphy_rating: ComboBoxText,
     giphy_search_btn: Button,
+    giphy_key_entry: Entry,
     giphy_more_btn: Button,
     giphy_box: FlowBox,
     giphy_scroll: ScrolledWindow,
@@ -624,6 +619,9 @@ fn main() {
     window.show_all();
     w.upload_progress.hide();
     w.cancel_btn.hide();
+    w.dev_panel.hide();
+    w.dongle_banner.hide();
+    update_dongle_banner(&w);
     w.sync_btn.set_sensitive(false);
     if (initial.start_minimized || tray_flag) && has_tray {
         window.hide();
@@ -1124,14 +1122,15 @@ fn build_ui(window: &Window, app: &Rc<App>) -> Widgets {
     let pill_box = Box::new(Orientation::Horizontal, 8);
     add_class(&pill_box, "pill");
     pill_box.set_valign(gtk::Align::Center);
+    pill_box.set_size_request(180, -1);
     let pill_dot = mk_label("●", "pill-dot");
     let pill = mk_label("Not connected", "pill-text");
+    pill.set_width_chars(18);
     pill_box.pack_start(&pill_dot, false, false, 0);
     pill_box.pack_start(&pill, false, false, 0);
 
     let connect_btn = Button::with_label("Connect keyboard");
     add_class(&connect_btn, "primary");
-    add_class(&connect_btn, "connect");
     let settings_btn = Button::with_label("⚙");
     add_class(&settings_btn, "icon");
     settings_btn.set_tooltip_text(Some("Settings"));
@@ -1148,10 +1147,30 @@ fn build_ui(window: &Window, app: &Rc<App>) -> Widgets {
     header_row.pack_end(&conn, false, false, 0);
     page.pack_start(&header_row, false, false, 0);
 
+    // ---------- dongle warning ----------
+    let dongle_banner = Box::new(Orientation::Vertical, 0);
+    add_class(&dongle_banner, "banner");
+    let banner_text = Label::new(None);
+    banner_text.set_markup(
+        "<b>2.4 GHz dongle connected.</b> The clock still syncs over the dongle, but the \
+         screen itself only answers on the USB cable, so sending pictures is paused. \
+         Everything you design can still be saved to history (kept on this computer). \
+         Switch the keyboard to <b>wired</b> and plug in the <b>USB-C cable</b> to send.",
+    );
+    banner_text.set_line_wrap(true);
+    banner_text.set_xalign(0.0);
+    add_class(&banner_text, "banner-text");
+    banner_text.set_margin_start(16);
+    banner_text.set_margin_end(16);
+    banner_text.set_margin_top(12);
+    banner_text.set_margin_bottom(12);
+    dongle_banner.pack_start(&banner_text, false, false, 0);
+    page.pack_start(&dongle_banner, false, false, 0);
+
     // ---------- sidebar ----------
     let sidebar = Box::new(Orientation::Vertical, 16);
     sidebar.set_size_request(340, -1);
-    sidebar.set_valign(gtk::Align::Start);
+    sidebar.set_valign(gtk::Align::Fill);
 
     let (preview_card, preview_in) = card(18, 0);
     preview_card.set_hexpand(false);
@@ -1213,42 +1232,29 @@ fn build_ui(window: &Window, app: &Rc<App>) -> Widgets {
 
     // device card (hidden until connected)
     let (dev_panel, dev_in) = card(18, 10);
-    dev_panel.set_no_show_all(true);
     dev_in.pack_start(&heading("Keyboard"), false, false, 0);
-    let dev_grid = Grid::new();
-    dev_grid.set_column_spacing(14);
-    dev_grid.set_row_spacing(3);
-    let dev_vid_pid = mk_label("vid/pid: —", "muted");
-    let dev_firmware = mk_label("firmware: —", "muted");
-    let dev_mode = mk_label("mode: —", "muted");
-    let dev_battery = mk_label("battery: —", "muted");
-    let dev_charging = mk_label("charging: —", "muted");
-    let dev_profile = mk_label("profile: —", "muted");
-    let dev_frames = mk_label("max frames: —", "muted");
-    let dev_direction = mk_label("screen: —", "muted");
-    dev_grid.attach(&dev_vid_pid, 0, 0, 1, 1);
-    dev_grid.attach(&dev_firmware, 0, 1, 1, 1);
-    dev_grid.attach(&dev_mode, 0, 2, 1, 1);
-    dev_grid.attach(&dev_battery, 0, 3, 1, 1);
-    dev_grid.attach(&dev_charging, 1, 0, 1, 1);
-    dev_grid.attach(&dev_profile, 1, 1, 1, 1);
-    dev_grid.attach(&dev_frames, 1, 2, 1, 1);
-    dev_grid.attach(&dev_direction, 1, 3, 1, 1);
-    dev_in.pack_start(&dev_grid, false, false, 0);
+    let dev_info = mk_label("", "muted");
+    add_class(&dev_info, "dev-info");
+    dev_info.set_line_wrap(true);
+    dev_info.set_selectable(true);
+    dev_in.pack_start(&dev_info, false, false, 0);
 
-    let sync_btn = Button::with_label("Sync clock now");
+    let sync_btn = Button::with_label("Sync clock");
     let builtin_combo = ComboBoxText::new();
     for n in 1..=3 {
         builtin_combo.append_text(&format!("Built-in {n}"));
     }
     builtin_combo.set_active(Some(0));
+    builtin_combo.set_hexpand(true);
     let builtin_btn = Button::with_label("Show");
     let dev_row = Box::new(Orientation::Horizontal, 8);
-    dev_row.set_margin_top(6);
+    dev_row.set_margin_top(4);
     dev_row.pack_start(&sync_btn, false, false, 0);
-    dev_row.pack_start(&builtin_combo, false, false, 0);
-    dev_row.pack_start(&builtin_btn, false, false, 0);
+    dev_row.pack_start(&builtin_combo, true, true, 0);
     dev_in.pack_start(&dev_row, false, false, 0);
+    let builtin_row = Box::new(Orientation::Horizontal, 8);
+    builtin_row.pack_start(&builtin_btn, false, false, 0);
+    dev_in.pack_start(&builtin_row, false, false, 0);
     let sync_status = mk_label("", "faint");
     let builtin_status = mk_label("", "faint");
     dev_in.pack_start(&sync_status, false, false, 0);
@@ -1380,6 +1386,22 @@ fn build_ui(window: &Window, app: &Rc<App>) -> Widgets {
     giphy_head.pack_start(&giphy_rating, false, false, 0);
     giphy_head.pack_start(&giphy_search_btn, false, false, 0);
     file_page.pack_start(&giphy_head, false, false, 0);
+
+    let giphy_key_row = Box::new(Orientation::Horizontal, 8);
+    let giphy_key_label = mk_label("GIPHY API key", "ctl-label");
+    giphy_key_label.set_halign(gtk::Align::Start);
+    let giphy_key_entry = Entry::new();
+    giphy_key_entry.set_text(&settings::Settings::load().giphy_key);
+    giphy_key_entry.set_placeholder_text(Some("paste your GIPHY API key"));
+    giphy_key_entry.set_hexpand(true);
+    let giphy_key_btn = Button::with_label("Get a free key");
+    giphy_key_row.pack_start(&giphy_key_label, false, false, 0);
+    giphy_key_row.pack_start(&giphy_key_entry, true, true, 0);
+    giphy_key_row.pack_start(&giphy_key_btn, false, false, 0);
+    file_page.pack_start(&giphy_key_row, false, false, 0);
+    giphy_key_btn.connect_clicked(|_| {
+        let _ = update::open_url("https://developers.giphy.com/dashboard/?create=true");
+    });
 
     let giphy_status = mk_label("", "faint");
     giphy_status.set_line_wrap(true);
@@ -1798,6 +1820,7 @@ fn build_ui(window: &Window, app: &Rc<App>) -> Widgets {
         preview,
         draw_canvas,
         draw_area,
+        dongle_banner,
         msg,
         frames_info,
         size_info,
@@ -1806,14 +1829,7 @@ fn build_ui(window: &Window, app: &Rc<App>) -> Widgets {
         connect_btn,
         settings_btn,
         dev_panel,
-        dev_vid_pid,
-        dev_firmware,
-        dev_mode,
-        dev_battery,
-        dev_charging,
-        dev_profile,
-        dev_frames,
-        dev_direction,
+        dev_info,
         sync_btn,
         sync_status,
         builtin_combo,
@@ -1828,6 +1844,7 @@ fn build_ui(window: &Window, app: &Rc<App>) -> Widgets {
         giphy_entry,
         giphy_rating,
         giphy_search_btn,
+        giphy_key_entry,
         giphy_more_btn,
         giphy_box,
         giphy_scroll,
@@ -1914,6 +1931,16 @@ fn set_msg(w: &Widgets, text: &str, class: &str) {
     }
 }
 
+/// Show the 2.4 GHz warning whenever the dongle is the only connection.
+fn update_dongle_banner(w: &Widgets) {
+    let presence = ak820_device::presence();
+    if presence.dongle && !presence.wired {
+        w.dongle_banner.show_all();
+    } else {
+        w.dongle_banner.hide();
+    }
+}
+
 fn set_pill(w: &Widgets, state: &str, text: &str) {
     let ctx = w.pill_dot.get_style_context();
     ctx.remove_class("ok");
@@ -1926,6 +1953,22 @@ fn set_pill(w: &Widgets, state: &str, text: &str) {
         _ => {}
     }
     w.pill.set_text(text);
+    w.pill.queue_resize();
+    if let Some(parent) = w.pill.get_parent() {
+        parent.queue_resize();
+    }
+}
+
+/// `Button::set_label` breaks the internal label allocation in gtk-rs 0.9
+/// after the button is realized. Updating the label child directly avoids it.
+fn set_button_text(button: &Button, text: &str) {
+    if let Some(child) = button.get_child() {
+        if let Ok(label) = child.downcast::<Label>() {
+            label.set_text(text);
+            return;
+        }
+    }
+    button.set_label(text);
 }
 
 // ---------- background clock sync, hotplug and tray ----------
@@ -2205,6 +2248,7 @@ fn start_watchers(w: &Widgets) {
             w2.app.connected.set(false);
             w2.sync_btn.set_sensitive(false);
             w2.dev_panel.hide();
+            update_dongle_banner(&w2);
             set_pill(&w2, "err", "Not connected");
             update_preview(&w2, &w2.app);
             if w2.window.get_visible() {
@@ -2229,6 +2273,7 @@ fn start_watchers(w: &Widgets) {
                 restore_latest(&w2);
             }
         }
+        update_dongle_banner(&w2);
         connect_device(&w2);
         Continue(true)
     });
@@ -3122,11 +3167,19 @@ fn giphy_result_thumb(bytes: &[u8]) -> Option<RgbaImage> {
 
 /// Run a GIPHY search and fill the result grid. `more` appends the next page.
 fn giphy_search(w: &Widgets, more: bool) {
-    let key = settings::Settings::load().giphy_key;
+    let mut key = settings::Settings::load().giphy_key;
+    let typed = w.giphy_key_entry.get_text().trim().to_string();
+    if !typed.is_empty() && typed != key {
+        key = typed.clone();
+        let mut s = settings::Settings::load();
+        s.giphy_key = typed;
+        let _ = s.save();
+    }
     if key.trim().is_empty() {
+        w.giphy_key_entry.grab_focus();
         set_msg(
             w,
-            "Add a GIPHY API key in Settings, then search again.",
+            "Paste a GIPHY API key above (or click “Get a free key”), then search again.",
             "err",
         );
         return;
@@ -3184,6 +3237,7 @@ fn giphy_search(w: &Widgets, more: bool) {
                 for (gif, thumb) in results {
                     giphy_add_result(&w2, gif, thumb);
                 }
+                w2.giphy_scroll.set_no_show_all(false);
                 w2.giphy_scroll.show_all();
                 w2.giphy_more_btn.show();
                 Continue(false)
@@ -3298,34 +3352,30 @@ fn connect_device(w: &Widgets) {
     let w2 = w.clone();
     glib::timeout_add_local(80, move || match rx.try_recv() {
         Ok(Ok(info)) => {
-            w2.dev_vid_pid
-                .set_text(&format!("vid/pid: {:04x}:{:04x}", info.vid, info.pid));
-            w2.dev_firmware.set_text(&format!(
-                "firmware: {}.{:02}",
+            w2.dev_info.set_text(&format!(
+                "Firmware {}.{:02}   ·   Battery {}%   ·   Up to {} frames",
                 info.firmware_hundredths / 100,
-                info.firmware_hundredths % 100
+                info.firmware_hundredths % 100,
+                info.battery,
+                info.max_frames
             ));
-            w2.dev_mode.set_text(&format!("mode: {}", info.work_mode));
-            w2.dev_battery
-                .set_text(&format!("battery: {}%", info.battery));
-            w2.dev_charging
-                .set_text(&format!("charging: {}", info.charging));
-            w2.dev_profile
-                .set_text(&format!("profile: {}", info.profile));
-            w2.dev_frames
-                .set_text(&format!("max frames: {}", info.max_frames));
-            w2.dev_direction
-                .set_text(&format!("screen: {}", info.tft_direction));
+            w2.dev_info.set_tooltip_text(Some(&format!(
+                "USB {:04x}:{:04x}\nmode: {}\ncharging: {}\nprofile: {}\nscreen direction: {}",
+                info.vid, info.pid, info.work_mode, info.charging, info.profile, info.tft_direction
+            )));
             *w2.app.max_frames.borrow_mut() = info.max_frames as usize;
             w2.dev_panel.show_all();
-            w2.connect_btn.set_label("Reconnect");
+            set_button_text(&w2.connect_btn, "Reconnect");
             w2.connect_btn.set_sensitive(true);
             w2.sync_btn.set_sensitive(true);
-            set_pill(
-                &w2,
-                "ok",
-                &format!("Connected · {:04x}:{:04x}", info.vid, info.pid),
-            );
+            let presence = ak820_device::presence();
+            let mode = if presence.dongle && !presence.wired {
+                "Dongle - clock only"
+            } else {
+                "USB"
+            };
+            set_pill(&w2, "ok", mode);
+            update_dongle_banner(&w2);
             set_msg(&w2, "Keyboard connected.", "ok");
             w2.app.connected.set(true);
             update_preview(&w2, &w2.app);
@@ -4352,7 +4402,7 @@ fn open_settings(w: &Widgets) {
     dialog.set_title("Settings");
     dialog.set_transient_for(Some(&w.window));
     dialog.set_modal(true);
-    dialog.set_default_size(620, 780);
+    dialog.set_default_size(580, -1);
     dialog.add_button("Cancel", ResponseType::Cancel);
     dialog.add_button("Save", ResponseType::Ok);
     dialog.set_default_response(ResponseType::Ok);
@@ -4360,19 +4410,22 @@ fn open_settings(w: &Widgets) {
         add_class(&save, "primary");
     }
 
-    let page = Box::new(Orientation::Vertical, 14);
-    page.set_margin_start(22);
-    page.set_margin_end(22);
-    page.set_margin_top(20);
-    page.set_margin_bottom(18);
-    let title = mk_label("SETTINGS", "section-title");
-    page.pack_start(&title, false, false, 0);
+    let area = dialog.get_content_area();
+    area.set_spacing(14);
+    area.set_margin_start(22);
+    area.set_margin_end(22);
+    area.set_margin_top(20);
+    area.set_margin_bottom(18);
+    area.pack_start(&mk_label("SETTINGS", "section-title"), false, false, 0);
     let hint = mk_label(
-        "Stored in ~/.local/share/ak820/settings.json, shared with ak820ctl and the systemd units.",
+        &format!(
+            "Stored in {}, shared with ak820ctl.",
+            ak820_store::data_dir().display()
+        ),
         "faint",
     );
     hint.set_line_wrap(true);
-    page.pack_start(&hint, false, false, 0);
+    area.pack_start(&hint, false, false, 0);
 
     let group = |name: &str| -> (Box, Box) {
         let outer = Box::new(Orientation::Vertical, 0);
@@ -4389,101 +4442,56 @@ fn open_settings(w: &Widgets) {
 
     // ---- Startup ----
     let (startup_card, startup_in) = group("Startup");
-    let autostart = gtk::CheckButton::with_label("Start AK820 Screen Studio when I log in");
+    let autostart = gtk::CheckButton::with_label("Start AK820 Studio when I log in");
     autostart.set_active(s.start_at_login);
-    startup_in.pack_start(&autostart, false, false, 0);
-    let startmin =
-        gtk::CheckButton::with_label("Start hidden in the tray instead of showing the window");
+    let startmin = gtk::CheckButton::with_label("Start hidden in the tray");
     startmin.set_active(s.start_minimized);
-    startup_in.pack_start(&startmin, false, false, 0);
     let tray = gtk::CheckButton::with_label("Keep running in the tray when I close the window");
     tray.set_active(s.minimize_to_tray);
+    startup_in.pack_start(&autostart, false, false, 0);
+    startup_in.pack_start(&startmin, false, false, 0);
     startup_in.pack_start(&tray, false, false, 0);
-    let bg_hint = mk_label(
-        "The tray icon has Open, Sync clock now and Quit. Without a tray (e.g. plain GNOME \
-         without the AppIndicator extension) closing the window quits the app.",
-        "faint",
-    );
-    bg_hint.set_line_wrap(true);
-    startup_in.pack_start(&bg_hint, false, false, 0);
-    let quit_btn = Button::with_label("Quit AK820 Screen Studio");
-    quit_btn.set_halign(gtk::Align::Start);
-    quit_btn.connect_clicked(|_| gtk::main_quit());
-    startup_in.pack_start(&quit_btn, false, false, 0);
-    page.pack_start(&startup_card, false, false, 0);
+    area.pack_start(&startup_card, false, false, 0);
 
     // ---- Clock ----
     let (clock_card, clock_in) = group("Clock");
-    let sync_start =
-        gtk::CheckButton::with_label("Sync the clock when the app starts, then every 12 hours");
+    let sync_start = gtk::CheckButton::with_label("Sync the clock when the app starts");
     sync_start.set_active(s.sync_on_start);
-    let sync_conn = gtk::CheckButton::with_label("Push the clock when the keyboard connects");
-    sync_conn.set_active(s.sync_on_connect);
-    let restore = gtk::CheckButton::with_label("Restore the last image when the keyboard connects");
-    restore.set_active(s.restore_on_connect);
-    let quit_sync = gtk::CheckButton::with_label("Quit right after the start-up sync");
-    quit_sync.set_active(s.quit_after_start_sync);
-    let autosync =
-        gtk::CheckButton::with_label("Let the ak820-clock.timer sync while the app is closed");
-    autosync.set_active(s.autosync_clock);
-    clock_in.pack_start(&sync_start, false, false, 0);
-    clock_in.pack_start(&sync_conn, false, false, 0);
-    clock_in.pack_start(&restore, false, false, 0);
-    clock_in.pack_start(&quit_sync, false, false, 0);
-    clock_in.pack_start(&autosync, false, false, 0);
-    let interval_row = Box::new(Orientation::Horizontal, 8);
-    let interval_lbl = mk_label(
-        "Extra re-sync interval (seconds, 0 = off, minimum 10)",
-        "ctl-label",
-    );
-    interval_lbl.set_halign(gtk::Align::Start);
-    interval_lbl.set_line_wrap(true);
-    let interval_entry = Entry::new();
-    interval_entry.set_text(&format!("{}", s.sync_interval_secs));
-    interval_entry.set_placeholder_text(Some("0 = off"));
-    interval_entry.set_width_chars(8);
-    interval_row.pack_start(&interval_lbl, true, true, 0);
-    interval_row.pack_start(&interval_entry, false, false, 0);
-    clock_in.pack_start(&interval_row, false, false, 0);
-    let sync_now = Button::with_label("Sync clock now");
-    sync_now.set_halign(gtk::Align::Start);
-    let clock_status = mk_label("", "faint");
-    clock_status.set_line_wrap(true);
-    {
-        let w2 = w.clone();
-        let status = clock_status.clone();
-        sync_now.connect_clicked(move |_| {
-            let status = status.clone();
-            spawn_clock_sync(
-                &w2,
-                false,
-                Some(std::boxed::Box::new(move |result| match result {
-                    Ok(stamp) => status.set_text(&format!("Synced {stamp}")),
-                    Err(e) => status.set_text(&format!("Sync failed: {e}")),
-                })),
-            );
-        });
-    }
-    clock_in.pack_start(&sync_now, false, false, 0);
-    clock_in.pack_start(&clock_status, false, false, 0);
     let clock_hint = mk_label(
-        "The background timer keeps the keyboard clock accurate while the app is closed. \
-         Enable it once with systemctl --user enable --now ak820-clock.timer, or leave it off \
-         and let the app sync while it runs.",
+        "The app pushes the clock when it opens (cold start or restored from the tray), \
+         then again every 12 hours while it runs.",
         "faint",
     );
     clock_hint.set_line_wrap(true);
+    clock_in.pack_start(&sync_start, false, false, 0);
     clock_in.pack_start(&clock_hint, false, false, 0);
-    page.pack_start(&clock_card, false, false, 0);
+    area.pack_start(&clock_card, false, false, 0);
+
+    // ---- Systemd ----
+    let (systemd_card, systemd_in) = group("Systemd");
+    let autosync = gtk::CheckButton::with_label("Let ak820-clock.timer sync in the background");
+    autosync.set_active(s.autosync_clock);
+    let systemd_hint = mk_label(
+        "Only useful if you enabled the timer with systemctl --user enable --now \
+         ak820-clock.timer. Leave it off if the app syncs on its own.",
+        "faint",
+    );
+    systemd_hint.set_line_wrap(true);
+    systemd_in.pack_start(&autosync, false, false, 0);
+    systemd_in.pack_start(&systemd_hint, false, false, 0);
+    area.pack_start(&systemd_card, false, false, 0);
 
     // ---- Updates ----
     let (update_card, update_in) = group("Updates");
-    let installed = format!(
-        "Installed: v{} ({} build)",
-        env!("CARGO_PKG_VERSION"),
-        update::package_kind()
+    let installed = mk_label(
+        &format!(
+            "Installed: v{} ({})",
+            env!("CARGO_PKG_VERSION"),
+            update::package_kind()
+        ),
+        "faint",
     );
-    update_in.pack_start(&mk_label(&installed, "faint"), false, false, 0);
+    update_in.pack_start(&installed, false, false, 0);
     let updates = gtk::CheckButton::with_label("Check for updates automatically (every 12 hours)");
     updates.set_active(s.check_updates);
     update_in.pack_start(&updates, false, false, 0);
@@ -4501,116 +4509,8 @@ fn open_settings(w: &Widgets) {
             check_updates(&w2, true, Some(status.clone()));
         });
     }
-    page.pack_start(&update_card, false, false, 0);
+    area.pack_start(&update_card, false, false, 0);
 
-    // ---- Uninstall ----
-    let (remove_card, remove_in) = group("Uninstall");
-    let remove_hint = mk_label(
-        "Remove AK820 Screen Studio from this computer. Your history and settings in \
-         ~/.local/share/ak820 are kept.",
-        "faint",
-    );
-    remove_hint.set_line_wrap(true);
-    remove_in.pack_start(&remove_hint, false, false, 0);
-    let command_row = Box::new(Orientation::Horizontal, 8);
-    let command_entry = Entry::new();
-    command_entry.set_text(&update::uninstall_command());
-    command_entry.set_editable(false);
-    command_entry.set_hexpand(true);
-    let copy_cmd = Button::with_label("Copy command");
-    command_row.pack_start(&command_entry, true, true, 0);
-    command_row.pack_start(&copy_cmd, false, false, 0);
-    remove_in.pack_start(&command_row, false, false, 0);
-    {
-        let entry = command_entry.clone();
-        copy_cmd.connect_clicked(move |_| copy_text(entry.get_text().as_ref()));
-    }
-    let uninstall_btn = Button::with_label("Uninstall AK820 Screen Studio");
-    uninstall_btn.set_halign(gtk::Align::Start);
-    add_class(&uninstall_btn, "primary");
-    let uninstall_status = mk_label("", "faint");
-    uninstall_status.set_line_wrap(true);
-    remove_in.pack_start(&uninstall_btn, false, false, 0);
-    remove_in.pack_start(&uninstall_status, false, false, 0);
-    {
-        let parent = w.window.clone();
-        let status = uninstall_status.clone();
-        let button = uninstall_btn.clone();
-        uninstall_btn.connect_clicked(move |_| {
-            let confirm = MessageDialog::new(
-                Some(&parent),
-                gtk::DialogFlags::MODAL,
-                gtk::MessageType::Question,
-                gtk::ButtonsType::YesNo,
-                "Uninstall AK820 Screen Studio? History and settings are kept.",
-            );
-            let status = status.clone();
-            let button = button.clone();
-            confirm.connect_response(move |dlg, response| {
-                if response == ResponseType::Yes {
-                    button.set_sensitive(false);
-                    status.set_text("Removing…");
-                    let (tx, rx) = mpsc::channel();
-                    std::thread::spawn(move || {
-                        let _ = tx.send(update::uninstall());
-                    });
-                    let status = status.clone();
-                    let button = button.clone();
-                    glib::timeout_add_local(200, move || match rx.try_recv() {
-                        Ok(Ok(text)) => {
-                            status.set_text(&text);
-                            glib::timeout_add_local(2000, move || {
-                                gtk::main_quit();
-                                Continue(false)
-                            });
-                            Continue(false)
-                        }
-                        Ok(Err(e)) => {
-                            status.set_text(&format!("Uninstall failed: {e}"));
-                            button.set_sensitive(true);
-                            Continue(false)
-                        }
-                        Err(TryRecvError::Empty) => Continue(true),
-                        Err(_) => Continue(false),
-                    });
-                    dlg.close();
-                } else {
-                    dlg.close();
-                }
-            });
-            confirm.show_all();
-        });
-    }
-    page.pack_start(&remove_card, false, false, 0);
-
-    // ---- Web ----
-    let (net_card, net_in) = group("Web");
-    net_in.set_hexpand(true);
-    let giphy_lbl = mk_label(
-        "GIPHY API key (stored in settings.json, used only for GIF search)",
-        "ctl-label",
-    );
-    giphy_lbl.set_halign(gtk::Align::Start);
-    giphy_lbl.set_line_wrap(true);
-    let giphy_row = Box::new(Orientation::Horizontal, 8);
-    let giphy_entry = Entry::new();
-    giphy_entry.set_text(&s.giphy_key);
-    giphy_entry.set_placeholder_text(Some("paste your GIPHY API key"));
-    giphy_entry.set_hexpand(true);
-    let get_key = Button::with_label("Get a free key");
-    giphy_row.pack_start(&giphy_entry, true, true, 0);
-    giphy_row.pack_start(&get_key, false, false, 0);
-    get_key.connect_clicked(|_| {
-        let _ = update::open_url("https://developers.giphy.com/dashboard/?create=true");
-    });
-    net_in.pack_start(&giphy_lbl, false, false, 0);
-    net_in.pack_start(&giphy_row, false, false, 0);
-    page.pack_start(&net_card, false, false, 0);
-
-    let scroll = ScrolledWindow::new(None::<&gtk::Adjustment>, None::<&gtk::Adjustment>);
-    scroll.set_policy(PolicyType::Never, PolicyType::Automatic);
-    scroll.add(&page);
-    dialog.get_content_area().pack_start(&scroll, true, true, 0);
     dialog.show_all();
 
     let w_ui = w.clone();
@@ -4621,14 +4521,8 @@ fn open_settings(w: &Widgets) {
             s.start_minimized = startmin.get_active();
             s.minimize_to_tray = tray.get_active();
             s.sync_on_start = sync_start.get_active();
-            s.sync_on_connect = sync_conn.get_active();
-            s.restore_on_connect = restore.get_active();
-            s.quit_after_start_sync = quit_sync.get_active();
             s.autosync_clock = autosync.get_active();
             s.check_updates = updates.get_active();
-            s.giphy_key = giphy_entry.get_text().trim().to_string();
-            let interval = interval_entry.get_text().trim().parse::<u64>().unwrap_or(0);
-            s.sync_interval_secs = if interval == 0 { 0 } else { interval.max(10) };
             match s.save() {
                 Ok(()) => {
                     if let Err(e) = autostart::set(s.start_at_login) {

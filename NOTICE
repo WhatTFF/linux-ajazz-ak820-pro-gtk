@@ -1,29 +1,33 @@
 # NOTICE
 
-This project is a derivative work of **ak820-screen** by fromagge:
+AK820 Screen Studio is licensed under the **GNU General Public License,
+version 3.0 only** (GPL-3.0-only). See [LICENSE](LICENSE).
+
+It is a derivative work of **ak820-screen** by fromagge, which is MIT-licensed:
 
     https://github.com/fromagge/ak820-screen
     commit 9030b81058fed04ce71ccd1a056118bcf0cbbb17 (2026-10-21)
     License: MIT
 
+The MIT-licensed parts remain available under the MIT license; the full text
+and copyright notices are in [LICENSE-MIT](LICENSE-MIT). Combining MIT-licensed
+code with GPL-3.0-only code is permitted because MIT is GPL-compatible.
+
 Reused verbatim or near-verbatim:
 
 - `PROTOCOL.md` — protocol documentation (copied, with a status note added at the top)
 - `udev/70-ak820.rules` — device permission rule
-- the entire web UI under `apps/desktop/ui/` (HTML, CSS, `app.js`, `gen.js`, `fx.js`,
-  and `ak820.js` up to its transport layer), including all generators and effects
+- the upstream web UI, generators and effects, reimplemented in Rust/GTK
 
 Reimplemented in Rust by this project:
 
 - HID transport (discovery, report sizing, chunking, retries, locking)
 - animation payload packing/unpacking (validated against the upstream JavaScript byte-for-byte)
-- history storage (SQLite instead of IndexedDB)
-- clock autosync service, tray, autostart, packaging
+- history storage
+- GTK3 interface, clock autosync service, tray, autostart, updates, packaging
 
 `ak820.py` from upstream was used as a behavioural reference for the transport and CLI; it is not
 vendored here.
-
-Upstream is MIT-licensed; the full license text and both copyright lines are in `LICENSE`.
 
 Not affiliated with AJAZZ, Epomaker, or Sonix. "AJAZZ", "Epomaker" and "AK820" are trademarks of
 their respective owners and are used only to describe compatibility.

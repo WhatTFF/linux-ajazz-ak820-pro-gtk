@@ -1,80 +1,121 @@
-# ak820-gtk
+# AK820 Screen Studio
 
 [![CI](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/actions/workflows/ci.yml/badge.svg)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/WhatTFF/linux-ajazz-ak820-pro-gtk?include_prereleases&label=release&color=ff6a2b)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey.svg)](#download)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+[![Platform: Linux x86_64](https://img.shields.io/badge/platform-Linux%20x86_64-lightgrey.svg)](#download)
 
-GTK3 control app for the **AJAZZ / Epomaker AK820 Pro** keyboard screen — a native Linux GUI that
-reuses the shared protocol, hidraw transport and on-disk history/settings crates from the
-Rust/Tauri project [`linux-ajazz-ak820-pro-app`](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app).
+Native Linux app for the **AJAZZ / Epomaker AK820 Pro** keyboard screen — put GIFs, images, video, text, drawings and procedural animations on the 0.85" 128×128 screen, then forget about it.
 
-Put GIFs and images on the 0.85" 128×128 screen, then forget about it: the app keeps the
-keyboard clock in step with your system clock automatically.
+A Rust/GTK3 rewrite of [fromagge/ak820-screen](https://github.com/fromagge/ak820-screen) with automatic clock sync. Unofficial — not affiliated with AJAZZ or Epomaker.
 
-> Unofficial. Not affiliated with AJAZZ or Epomaker. Protocol recovered by the upstream project
-> from the vendor's own WebHID driver — see [PROTOCOL.md](PROTOCOL.md).
+> The original Rust/Tauri version lives at
+> [WhatTFF/linux-ajazz-ak820-pro-app](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app).
+> This GTK version is the actively developed native Linux build.
 
-**Source, issues and releases:** <https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk> ·
-[releases](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases) ·
-[issues](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/issues)
+---
+
+## Screenshots
+
+| Main window | Settings |
+| --- | --- |
+| ![Main window](docs/screenshots/main.png) | ![Settings](docs/screenshots/settings.png) |
+
+---
 
 ## Download
 
+Prebuilt x86_64 packages are attached to every [release](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases):
+
 [![Download the RPM](https://img.shields.io/badge/download-.rpm-294172?style=for-the-badge&logo=fedora&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
 [![Download the DEB](https://img.shields.io/badge/download-.deb-A81D33?style=for-the-badge&logo=debian&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
-[![Download the AppImage](https://img.shields.io/badge/download-.AppImage-ff6a2b?style=for-the-badge&logo=appimage&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
-[![Download the source tarball](https://img.shields.io/badge/download-source-294172?style=for-the-badge&logo=github&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
-
-Every [release](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases) carries the
-packages above plus a `SHA256SUMS` file; the newest release is listed first.
+[![Download the AppImage](https://img.shields.io/badge/download-.AppImage-ff6a2b?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
 
 | Format | Distros | Install |
 | --- | --- | --- |
 | `.rpm` | Fedora, RHEL, openSUSE | `sudo dnf install ./ak820-gtk-*.rpm` |
-| `.deb` | Debian, Ubuntu, Mint, Pop!\_OS | `sudo apt install ./ak820-gtk_*.deb` |
+| `.deb` | Debian, Ubuntu, Mint, Pop!_OS | `sudo apt install ./ak820-gtk_*.deb` |
 | `.AppImage` | any glibc distro, no root | `chmod +x ak820-gtk_*.AppImage && ./ak820-gtk_*.AppImage` |
-| source | any | `cargo build --release -p ak820-gtk -p ak820-cli` |
 
-All three need **GTK 3** at runtime (ships with Fedora Workstation and Ubuntu 22.04+). Video
-files additionally need `ffmpeg` on `PATH`. Install the udev rule once so a normal user can open
-the keyboard:
+Every release carries the three packages plus a `SHA256SUMS` file. The app checks for updates itself — you don't have to come back here.
+
+All three need **GTK 3** at runtime (ships with Fedora Workstation and Ubuntu 22.04+). Video files additionally need `ffmpeg` on `PATH`. A tray requires a StatusNotifier host; on plain GNOME that means the AppIndicator extension.
+
+---
+
+## What it does
+
+**Put pictures on your keyboard screen.** Drag and drop images, GIFs or video. Draw, add text, apply effects, adjust colors. Send it to the AK820 Pro's 0.85" 128×128 screen over USB-C.
+
+**Clock stays in sync.** The app pushes your computer's clock on start, on plug-in, every 12 hours while it runs, and whenever you press **Sync clock**. The keyboard's clock never drifts.
+
+**Works over the 2.4 GHz dongle.** Clock sync works over the dongle; pictures need the USB-C cable (the dongle has no screen interface). Designs can always be saved to history and sent later when the keyboard is on the cable.
+
+> **2.4 GHz dongle warning.** The clock still syncs over the dongle, but the screen itself only answers on the USB cable, so sending pictures is paused. Everything you design can still be saved to history (kept on this computer). Switch the keyboard to **wired** and plug in the **USB-C cable** to send.
+
+**Tray-friendly.** Keep it running in the tray, start hidden, sync at login — set it and forget it.
+
+---
+
+## Features
+
+| Feature | Details |
+| --- | --- |
+| 🖼️ **Images, GIFs, video** | Drag and drop, clipboard paste, or pick a file; frames are extracted automatically |
+| 🎨 **Draw, text, effects** | Built-in canvas, text generator, captions, and procedural animations |
+| ⏰ **Clock autosync** | Sync on start, on plug-in, every 12 h, or on demand from the device panel or tray |
+| 💾 **History** | Every design is saved on disk; restore, delete one entry, or clear everything |
+| 🗄️ **Tray icon** | StatusNotifierItem / AppIndicator with Open, Sync clock now and Quit |
+| 📦 **In-app updates** | Checks GitHub releases; AppImage replaces itself, RPM/DEB offers a polkit install prompt |
+| 🔎 **GIPHY search** | Paste your own API key in Image / Video; key stays on this computer |
+| ⌨️ **ak820ctl CLI** | `info`, `time`, `upload`, `builtin`, `history`, `raw` — everything scriptable |
+| 🔒 **Offline-friendly** | No network needed except for update checks and optional GIPHY search |
+
+---
+
+## System requirements
+
+- **Linux x86_64** (Fedora Workstation, Ubuntu 22.04+, Debian, etc.)
+- **GTK 3** (ships with Fedora Workstation and Ubuntu 22.04+)
+- **udev rule** for hidraw access (installed by the RPM and DEB; one-time manual step for AppImage)
+- **ffmpeg** on `PATH` for MP4/WebM/MKV video import (optional)
+- **StatusNotifier host** for the tray icon (KDE, GNOME + AppIndicator extension, etc.)
+
+---
+
+## Quick start
+
+**From a package:**
+
+```bash
+# Fedora / RHEL
+sudo dnf install ./ak820-gtk-*.rpm
+
+# Debian / Ubuntu
+sudo apt install ./ak820-gtk_*.deb
+
+# AppImage
+chmod +x ak820-gtk_*.AppImage
+./ak820-gtk_*.AppImage
+```
+
+If you use the AppImage, install the udev rule once:
 
 ```bash
 sudo install -Dm644 udev/70-ak820.rules /usr/lib/udev/rules.d/70-ak820.rules
 sudo udevadm control --reload && sudo udevadm trigger
 ```
 
-Then unplug and replug the keyboard so the new permissions apply.
+Then flip the keyboard's mode switch to **wired**, plug in the **USB-C cable**, open AK820 Screen Studio, and send your first design. Unplug and replug the keyboard after installing the udev rule.
 
-## Status
-
-Working on hardware (fw 1.07, PID `0c45:8009`):
-
-- `ak820ctl` — `info`, `time`, `upload`, `builtin`, `history list|export|restore|clear`, `raw`
-- `ak820-gtk` — GTK3 window: device info, clock sync, built-in animations, image/GIF/video upload
-  with live preview and progress bar, drag & drop, clipboard paste, GIPHY search, upload history
-  with per-entry delete and clear-all
-- **Tray** — StatusNotifierItem / AppIndicator icon with **Open**, **Sync clock now** and **Quit**
-- **Settings**: start at login (`~/.config/autostart`), start minimized, minimize to tray, sync on
-  start and every 12 h, sync on connect, restore last image on connect, extra sync interval,
-  optional `ak820-clock.timer` hint, automatic update checks, manual update download/install,
-  uninstall, GIPHY API key
-- **Updates** — checks GitHub releases, downloads RPM/DEB/AppImage, installs through `pkexec`
-  (RPM/DEB), replaces the running AppImage, or offers the exact terminal command
-- clock autosync units (`systemd/`), udev rule, DEB + RPM + AppImage packages
-
-Not done yet: Flatpak, COPR, GIPHY key in the keyring, SQLite-backed history. See the upstream
-project's [PLAN.md](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app/blob/main/PLAN.md).
-
-## Install (from source, Fedora)
+**From source (Fedora):**
 
 ```bash
 sudo dnf install gtk3-devel gdk3-devel glib2-devel cargo rust gcc gcc-c++ pkgconf-pkg-config
 # optional, for video files:
 sudo dnf install ffmpeg
-cargo build --release -p ak820-gtk -p ak820-cli
 
+cargo build --release -p ak820-gtk -p ak820-cli
 sudo install -Dm755 target/release/ak820-gtk /usr/local/bin/
 sudo install -Dm755 target/release/ak820ctl /usr/local/bin/
 sudo install -Dm644 udev/70-ak820.rules /usr/lib/udev/rules.d/70-ak820.rules
@@ -90,14 +131,11 @@ ak820ctl time                 # push the clock once
 ./target/release/ak820-gtk    # the app
 ```
 
-## Clock autosync
+---
 
-Two ways, pick one:
+## Clock autosync with systemd
 
-- **In the app** (default): ⚙ Settings → Clock. The clock is pushed when the app starts,
-  when the keyboard connects, every 12 hours, and on demand with **Sync clock now** (device
-  panel, Settings or tray). An optional extra interval can re-sync more often (minimum 10 s).
-- **With systemd**: the units below, for machines where the app is not running.
+The app syncs while it runs. If you want the clock to stay correct while the app is closed, install the user units:
 
 ```bash
 mkdir -p ~/.config/systemd/user
@@ -107,31 +145,20 @@ systemctl --user enable --now ak820-clock.timer
 systemctl --user enable ak820-resume.service
 ```
 
-The timer pushes the clock every 60 s while the keyboard is connected (it exits silently when it
-is not, and when `autosync_clock` is switched off in the app), `ak820-resume.service` covers
-suspend/resume, and the udev rule starts `ak820-connect.service` on plug-in, which also
-re-uploads the newest history entry when `restore_on_connect` is enabled in
-`~/.local/share/ak820/settings.json`.
+Enable the same option in **Settings → Systemd** so the timer and the app do not fight over the keyboard.
 
-## Layout
-
-```
-crates/ak820-proto    packet framing, animation payload, RGB565, device info (pure, unit-tested)
-crates/ak820-device   sysfs interface discovery, hidraw I/O, retries, single-writer lock
-crates/ak820-store    history on disk (same format as the Python CLI), settings
-crates/ak820-cli      ak820ctl
-apps/gtk              GTK3 control application
-systemd/ udev/        autosync units and device permissions
-```
-
-## Tests
-
-```bash
-cargo test --workspace                            # pure logic, no hardware needed
-```
+---
 
 ## Credits
 
 Upstream protocol research, web UI, generators and effects: **fromagge/ak820-screen** (MIT).
-The shared Rust crates are ported from [`WhatTFF/linux-ajazz-ak820-pro-app`](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app)
-(MIT). See [NOTICE](NOTICE) and [docs/UPSTREAM.md](docs/UPSTREAM.md).
+The shared Rust crates and the original Tauri app: **WhatTFF/linux-ajazz-ak820-pro-app** (MIT).
+This project is a GTK3 rewrite; see [NOTICE](NOTICE) and [docs/UPSTREAM.md](docs/UPSTREAM.md).
+
+AK820 Screen Studio is licensed under the **GNU General Public License v3.0 only**. The MIT-licensed upstream parts remain under MIT; see [LICENSE-MIT](LICENSE-MIT).
+
+Community: [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md)
+
+---
+
+**Source, issues and releases:** [https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk) · [releases](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases) · [issues](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/issues)

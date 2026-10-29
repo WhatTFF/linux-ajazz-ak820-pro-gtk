@@ -3,11 +3,11 @@
 %global _build_id_links none
 
 Name:           ak820-gtk
-Version:        0.2.1
+Version:        0.2.2
 Release:        1.beta%{?dist}
 Summary:        GTK3 control app for the AJAZZ / Epomaker AK820 Pro TFT screen
 
-License:        MIT
+License:        GPL-3.0-only
 URL:            https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk
 Source0:        %{name}-%{version}.tar.gz
 
@@ -46,6 +46,7 @@ install -Dm644 packaging/linux/ak820-gtk.desktop %{buildroot}%{_datadir}/applica
 install -Dm644 packaging/linux/ak820-gtk.png %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/ak820-gtk.png
 
 install -Dm644 LICENSE %{buildroot}%{_datadir}/licenses/ak820-gtk/LICENSE
+install -Dm644 LICENSE-MIT %{buildroot}%{_datadir}/licenses/ak820-gtk/LICENSE-MIT
 install -Dm644 NOTICE %{buildroot}%{_datadir}/doc/ak820-gtk/NOTICE
 install -Dm644 PROTOCOL.md %{buildroot}%{_datadir}/doc/ak820-gtk/PROTOCOL.md
 install -Dm644 README.md %{buildroot}%{_datadir}/doc/ak820-gtk/README.md
@@ -68,6 +69,7 @@ rm -rf %{buildroot}
 %{_datadir}/applications/ak820-gtk.desktop
 %{_datadir}/icons/hicolor/256x256/apps/ak820-gtk.png
 %{_datadir}/licenses/ak820-gtk/LICENSE
+%{_datadir}/licenses/ak820-gtk/LICENSE-MIT
 %{_datadir}/doc/ak820-gtk/NOTICE
 %{_datadir}/doc/ak820-gtk/PROTOCOL.md
 %{_datadir}/doc/ak820-gtk/README.md

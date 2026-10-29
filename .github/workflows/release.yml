@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to release (e.g. v0.2.1-beta)"
+        description: "Existing tag to release (e.g. v0.2.2-beta)"
         required: true
 
 permissions:
@@ -94,6 +94,7 @@ jobs:
           install -Dm644 LICENSE "$root/usr/share/doc/ak820-gtk/copyright"
           install -Dm644 README.md "$root/usr/share/doc/ak820-gtk/README.md"
           install -Dm644 NOTICE "$root/usr/share/doc/ak820-gtk/NOTICE"
+          install -Dm644 LICENSE-MIT "$root/usr/share/doc/ak820-gtk/LICENSE-MIT"
           cat > "$root/DEBIAN/control" <<EOF
           Package: ak820-gtk
           Version: ${version}
@@ -157,11 +158,16 @@ jobs:
           mkdir -p \
             "$appdir/usr/bin" \
             "$appdir/usr/share/applications" \
-            "$appdir/usr/share/icons/hicolor/256x256/apps"
+            "$appdir/usr/share/icons/hicolor/256x256/apps" \
+            "$appdir/usr/share/doc/ak820-gtk"
           install -Dm755 target/release/ak820-gtk "$appdir/usr/bin/ak820-gtk"
           install -Dm755 target/release/ak820ctl "$appdir/usr/bin/ak820ctl"
           install -Dm644 packaging/linux/ak820-gtk.desktop "$appdir/ak820-gtk.desktop"
           install -Dm644 packaging/linux/ak820-gtk.png "$appdir/ak820-gtk.png"
+          install -Dm644 LICENSE "$appdir/usr/share/doc/ak820-gtk/LICENSE"
+          install -Dm644 LICENSE-MIT "$appdir/usr/share/doc/ak820-gtk/LICENSE-MIT"
+          install -Dm644 NOTICE "$appdir/usr/share/doc/ak820-gtk/NOTICE"
+          install -Dm644 README.md "$appdir/usr/share/doc/ak820-gtk/README.md"
           ln -sf ak820-gtk.png "$appdir/.DirIcon"
           cat > "$appdir/AppRun" <<'EOF'
           #!/bin/sh
