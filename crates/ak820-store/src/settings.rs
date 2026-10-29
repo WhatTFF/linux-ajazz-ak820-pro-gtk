@@ -34,6 +34,8 @@ pub struct Settings {
     pub sync_interval_secs: u64,
     /// Look for a new release in the background and offer it.
     pub check_updates: bool,
+    /// Release tag the user pressed "Later" on.
+    pub skipped_update: String,
 }
 
 impl Default for Settings {
@@ -50,6 +52,7 @@ impl Default for Settings {
             quit_after_start_sync: false,
             sync_interval_secs: 0,
             check_updates: true,
+            skipped_update: String::new(),
         }
     }
 }
@@ -99,6 +102,7 @@ mod tests {
             quit_after_start_sync: true,
             sync_interval_secs: 300,
             check_updates: false,
+            skipped_update: "v9.9.9".into(),
         };
         let json = serde_json::to_string(&settings).unwrap();
         let parsed: Settings = serde_json::from_str(&json).unwrap();

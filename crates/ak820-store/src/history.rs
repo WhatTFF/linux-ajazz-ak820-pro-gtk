@@ -101,6 +101,22 @@ pub fn load(index: usize) -> Result<Vec<u8>, String> {
     std::fs::read(&entry.path).map_err(|e| format!("{}: {e}", entry.path.display()))
 }
 
+/// Delete entry `index` (1 = newest).
+pub fn delete(index: usize) -> Result<(), String> {
+    delete_in(&dir(), index)
+}
+
+fn delete_in(dir: &Path, index: usize) -> Result<(), String> {
+    if index == 0 {
+        return Err("history entries are numbered from 1".into());
+    }
+    let entry = list_in(dir)
+        .into_iter()
+        .find(|e| e.index == index)
+        .ok_or_else(|| format!("no history entry {index}"))?;
+    std::fs::remove_file(&entry.path).map_err(|e| format!("{}: {e}", entry.path.display()))
+}
+
 /// Delete every stored upload; returns how many were removed.
 pub fn clear() -> Result<usize, String> {
     let entries = list();
@@ -141,5 +157,19 @@ mod tests {
     fn missing_directory_lists_empty() {
         let entries = list_in(Path::new("/nonexistent/ak820"));
         assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn delete_removes_only_the_selected_entry() {
+        let dir = tempdir("delete");
+        std::fs::write(dir.join("20260101-000000_old.bin"), [1u8]).unwrap();
+        std::fs::write(dir.join("20260102-000000_new.bin"), [2u8]).unwrap();
+        let entries = list_in(&dir);
+        assert_eq!(entries.len(), 2);
+        delete_in(&dir, 1).unwrap();
+        let left = list_in(&dir);
+        assert_eq!(left.len(), 1);
+        assert_eq!(left[0].name, "old");
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 }

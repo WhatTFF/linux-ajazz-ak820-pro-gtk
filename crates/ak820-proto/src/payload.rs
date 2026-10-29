@@ -93,7 +93,11 @@ pub fn parse_payload(payload: &[u8], limit: usize) -> Result<Vec<FrameOwned>, Er
                 payload[k + 1]
             } else {
                 let stored = payload[declared - 1];
-                if stored == 0 { 50 } else { stored }
+                if stored == 0 {
+                    50
+                } else {
+                    stored
+                }
             };
             u16::from(raw) * 2
         };

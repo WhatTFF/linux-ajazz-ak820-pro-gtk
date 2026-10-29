@@ -1,0 +1,205 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v0.2.1-beta)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  rpm:
+    runs-on: ubuntu-latest
+    container: fedora:45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            git gcc gcc-c++ make pkgconf-pkg-config rust cargo rpm-build \
+            gtk3-devel glib2-devel libpng-devel libjpeg-turbo-devel libwebp-devel
+
+      - name: Build RPM
+        run: |
+          version="${TAG#v}"
+          rpm_version="${version%%-*}"
+          mkdir -p rpmbuild/SOURCES
+          git archive --format=tar.gz \
+            --prefix="ak820-gtk-${rpm_version}/" \
+            -o "rpmbuild/SOURCES/ak820-gtk-${rpm_version}.tar.gz" HEAD
+          rpmbuild -bb \
+            --define "_topdir $PWD/rpmbuild" \
+            --define "_sourcedir $PWD/rpmbuild/SOURCES" \
+            --define "dist .fc45" \
+            ak820-gtk.spec
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm
+          path: rpmbuild/RPMS/**/ak820-gtk-[0-9]*.rpm
+          if-no-files-found: error
+
+  deb:
+    runs-on: ubuntu-latest
+    container: fedora:45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            gcc gcc-c++ make pkgconf-pkg-config rust cargo dpkg \
+            gtk3-devel glib2-devel libpng-devel libjpeg-turbo-devel libwebp-devel
+
+      - name: Build DEB
+        run: |
+          version="${TAG#v}"
+          cargo build --release -p ak820-gtk -p ak820-cli
+          root="pkg/ak820-gtk_${version}_amd64"
+          mkdir -p \
+            "$root/DEBIAN" \
+            "$root/usr/bin" \
+            "$root/usr/lib/udev/rules.d" \
+            "$root/usr/lib/systemd/user" \
+            "$root/usr/share/applications" \
+            "$root/usr/share/icons/hicolor/256x256/apps" \
+            "$root/usr/share/doc/ak820-gtk"
+          install -Dm755 target/release/ak820-gtk "$root/usr/bin/ak820-gtk"
+          install -Dm755 target/release/ak820ctl "$root/usr/bin/ak820ctl"
+          install -Dm644 udev/70-ak820.rules "$root/usr/lib/udev/rules.d/70-ak820.rules"
+          install -Dm644 systemd/ak820-clock.service "$root/usr/lib/systemd/user/ak820-clock.service"
+          install -Dm644 systemd/ak820-clock.timer "$root/usr/lib/systemd/user/ak820-clock.timer"
+          install -Dm644 systemd/ak820-connect.service "$root/usr/lib/systemd/user/ak820-connect.service"
+          install -Dm644 systemd/ak820-resume.service "$root/usr/lib/systemd/user/ak820-resume.service"
+          install -Dm644 packaging/linux/ak820-gtk.desktop "$root/usr/share/applications/ak820-gtk.desktop"
+          install -Dm644 packaging/linux/ak820-gtk.png "$root/usr/share/icons/hicolor/256x256/apps/ak820-gtk.png"
+          install -Dm644 LICENSE "$root/usr/share/doc/ak820-gtk/copyright"
+          install -Dm644 README.md "$root/usr/share/doc/ak820-gtk/README.md"
+          install -Dm644 NOTICE "$root/usr/share/doc/ak820-gtk/NOTICE"
+          cat > "$root/DEBIAN/control" <<EOF
+          Package: ak820-gtk
+          Version: ${version}
+          Architecture: amd64
+          Maintainer: Emin G. <emin.by@outlook.com>
+          Depends: libgtk-3-0, libglib2.0-0, libgdk-pixbuf-2.0-0
+          Section: utils
+          Priority: optional
+          Homepage: https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk
+          Description: GTK3 control app for the AJAZZ / Epomaker AK820 Pro TFT screen
+           Reads device info, syncs the keyboard clock, uploads images/GIFs/video with
+           a live preview, keeps upload history and runs from the tray.
+          EOF
+          cat > "$root/DEBIAN/postinst" <<'EOF'
+          #!/bin/sh
+          set -e
+          udevadm control --reload-rules >/dev/null 2>&1 || true
+          udevadm trigger >/dev/null 2>&1 || true
+          exit 0
+          EOF
+          cat > "$root/DEBIAN/postrm" <<'EOF'
+          #!/bin/sh
+          set -e
+          udevadm control --reload-rules >/dev/null 2>&1 || true
+          udevadm trigger >/dev/null 2>&1 || true
+          exit 0
+          EOF
+          chmod 755 "$root/DEBIAN/postinst" "$root/DEBIAN/postrm"
+          dpkg-deb --build --root-owner-group "$root" "ak820-gtk_${version}_amd64.deb"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: ak820-gtk_*.deb
+          if-no-files-found: error
+
+  appimage:
+    runs-on: ubuntu-latest
+    container: fedora:45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            gcc gcc-c++ make pkgconf-pkg-config rust cargo curl file \
+            gtk3-devel glib2-devel libpng-devel libjpeg-turbo-devel libwebp-devel
+
+      - name: Build AppImage
+        run: |
+          version="${TAG#v}"
+          cargo build --release -p ak820-gtk -p ak820-cli
+          curl -fsSL --retry 3 -o /tmp/appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /tmp/appimagetool
+          /tmp/appimagetool --appimage-extract >/dev/null
+
+          appdir="AppDir"
+          mkdir -p \
+            "$appdir/usr/bin" \
+            "$appdir/usr/share/applications" \
+            "$appdir/usr/share/icons/hicolor/256x256/apps"
+          install -Dm755 target/release/ak820-gtk "$appdir/usr/bin/ak820-gtk"
+          install -Dm755 target/release/ak820ctl "$appdir/usr/bin/ak820ctl"
+          install -Dm644 packaging/linux/ak820-gtk.desktop "$appdir/ak820-gtk.desktop"
+          install -Dm644 packaging/linux/ak820-gtk.png "$appdir/ak820-gtk.png"
+          ln -sf ak820-gtk.png "$appdir/.DirIcon"
+          cat > "$appdir/AppRun" <<'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          export PATH="$HERE/usr/bin:$PATH"
+          exec "$HERE/usr/bin/ak820-gtk" "$@"
+          EOF
+          chmod +x "$appdir/AppRun"
+          ARCH=x86_64 NO_STRIP=1 squashfs-root/AppRun --no-appstream \
+            "$appdir" "ak820-gtk_${version}_amd64.AppImage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appimage
+          path: ak820-gtk_*.AppImage
+          if-no-files-found: error
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [rpm, deb, appimage]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -e
+          ls -lh dist
+          (cd dist && sha256sum ak820-gtk-* ak820-gtk_* > SHA256SUMS)
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --prerelease \
+              --generate-notes \
+              --title "AK820 Screen Studio $TAG"
+          fi

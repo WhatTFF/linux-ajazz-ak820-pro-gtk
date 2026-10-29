@@ -13,7 +13,7 @@ mod iface;
 mod lock;
 #[allow(unsafe_code)]
 mod sys;
-pub use discovery::{IfaceInfo, Interfaces, Presence, find, parse_descriptor, presence};
+pub use discovery::{find, parse_descriptor, presence, IfaceInfo, Interfaces, Presence};
 pub use error::Error;
 pub use iface::Iface;
 pub use lock::DeviceLock;
@@ -22,8 +22,8 @@ use std::path::Path;
 use std::time::Duration;
 
 use ak820_proto::{
-    CivilTime, DeviceInfo, FRAME_BYTES, MAX_FRAMES, PAYLOAD_HEADER, clock_payload, command_packet,
-    parse_info, upload_packet,
+    clock_payload, command_packet, parse_info, upload_packet, CivilTime, DeviceInfo, FRAME_BYTES,
+    MAX_FRAMES, PAYLOAD_HEADER,
 };
 
 /// Default reply timeout for control commands.

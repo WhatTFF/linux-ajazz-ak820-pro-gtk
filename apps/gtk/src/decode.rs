@@ -4,7 +4,7 @@
 //! byte-identical payloads for the same input.
 
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Cursor};
 use std::path::Path;
 
 use ak820_proto::{FRAME_BYTES, H, W};
@@ -21,6 +21,7 @@ pub struct SourceFrame {
 }
 
 /// How to fit the source into the square screen.
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fit {
     /// Fill the screen, cropping the overflow (default, like the web app).
@@ -37,22 +38,27 @@ pub fn load(
     background: [u8; 4],
     force_delay: Option<u16>,
 ) -> Result<Vec<SourceFrame>, String> {
-    let is_gif = path
+    let ext = path
         .extension()
         .and_then(|e| e.to_str())
-        .is_some_and(|e| e.eq_ignore_ascii_case("gif"));
-
-    let raw: Vec<(RgbaImage, u16)> = if is_gif {
-        decode_gif(path)?
-    } else {
-        let img = image::ImageReader::open(path)
-            .map_err(|e| format!("{}: {e}", path.display()))?
-            .with_guessed_format()
-            .map_err(|e| format!("{}: {e}", path.display()))?
-            .decode()
-            .map_err(|e| format!("{}: {e}", path.display()))?
-            .to_rgba8();
-        vec![(img, 100)]
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    let raw: Vec<(RgbaImage, u16)> = match ext.as_str() {
+        "gif" => {
+            let file = File::open(path).map_err(|e| format!("{}: {e}", path.display()))?;
+            decode_gif(BufReader::new(file))?
+        }
+        "mp4" | "webm" | "mkv" | "mov" | "avi" | "m4v" => decode_video(path)?,
+        _ => {
+            let img = image::ImageReader::open(path)
+                .map_err(|e| format!("{}: {e}", path.display()))?
+                .with_guessed_format()
+                .map_err(|e| format!("{}: {e}", path.display()))?
+                .decode()
+                .map_err(|e| format!("{}: {e}", path.display()))?
+                .to_rgba8();
+            vec![(img, 100)]
+        }
     };
 
     if raw.is_empty() {
@@ -68,14 +74,44 @@ pub fn load(
         .collect())
 }
 
-fn decode_gif(path: &Path) -> Result<Vec<(RgbaImage, u16)>, String> {
-    let file = File::open(path).map_err(|e| format!("{}: {e}", path.display()))?;
-    let decoder = GifDecoder::new(BufReader::new(file))
-        .map_err(|e| format!("{}: {e}", path.display()))?;
+/// Decode image/GIF bytes (clipboard, GIPHY) into fitted frames.
+pub fn load_bytes(
+    bytes: &[u8],
+    fit: Fit,
+    background: [u8; 4],
+    force_delay: Option<u16>,
+) -> Result<Vec<SourceFrame>, String> {
+    if bytes.is_empty() {
+        return Err("empty image".into());
+    }
+    let raw: Vec<(RgbaImage, u16)> = if bytes.starts_with(b"GIF8") {
+        decode_gif(Cursor::new(bytes.to_vec()))?
+    } else {
+        let img = image::load_from_memory(bytes)
+            .map_err(|e| format!("image: {e}"))?
+            .to_rgba8();
+        vec![(img, 100)]
+    };
+    if raw.is_empty() {
+        return Err("no frames".into());
+    }
+    Ok(raw
+        .into_iter()
+        .map(|(img, delay)| SourceFrame {
+            image: fit_to_screen(&img, fit, background),
+            delay_ms: force_delay.unwrap_or(delay),
+        })
+        .collect())
+}
+
+fn decode_gif<R: std::io::BufRead + std::io::Seek + 'static>(
+    reader: R,
+) -> Result<Vec<(RgbaImage, u16)>, String> {
+    let decoder = GifDecoder::new(reader).map_err(|e| e.to_string())?;
     let frames = decoder
         .into_frames()
         .collect_frames()
-        .map_err(|e| format!("{}: {e}", path.display()))?;
+        .map_err(|e| e.to_string())?;
 
     Ok(frames
         .into_iter()
@@ -88,6 +124,53 @@ fn decode_gif(path: &Path) -> Result<Vec<(RgbaImage, u16)>, String> {
             (frame.into_buffer(), ms)
         })
         .collect())
+}
+
+/// Extract up to 255 frames at 12 fps with `ffmpeg` (optional dependency).
+fn decode_video(path: &Path) -> Result<Vec<(RgbaImage, u16)>, String> {
+    let output = std::process::Command::new("ffmpeg")
+        .args(["-v", "error", "-i"])
+        .arg(path)
+        .args([
+            "-vf",
+            "fps=12,scale=128:128:force_original_aspect_ratio=increase,crop=128:128",
+            "-frames:v",
+            "255",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgba",
+            "-",
+        ])
+        .output()
+        .map_err(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                "video needs ffmpeg installed (Fedora: sudo dnf install ffmpeg)".to_string()
+            } else {
+                format!("ffmpeg: {e}")
+            }
+        })?;
+    if !output.status.success() {
+        let err = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "ffmpeg could not read {}: {}",
+            path.display(),
+            err.lines().last().unwrap_or("unknown error").trim()
+        ));
+    }
+    let frame_len = W * H * 4;
+    let frames: Vec<(RgbaImage, u16)> = output
+        .stdout
+        .chunks_exact(frame_len)
+        .filter_map(|chunk| {
+            RgbaImage::from_raw(W as u32, H as u32, chunk.to_vec()).map(|img| (img, 83))
+        })
+        .collect();
+    if frames.is_empty() {
+        Err(format!("{}: no video frames decoded", path.display()))
+    } else {
+        Ok(frames)
+    }
 }
 
 /// Scale + place `img` into a 128×128 RGBA canvas.
@@ -122,6 +205,7 @@ pub fn fit_to_screen(img: &RgbaImage, fit: Fit, background: [u8; 4]) -> RgbaImag
 
 /// Pack fitted frames into RGB565 little-endian.
 /// Pack fitted frames into RGB565 little-endian.
+#[allow(dead_code)]
 pub fn to_rgb565(frames: &[SourceFrame]) -> Vec<Vec<u8>> {
     frames
         .iter()
@@ -134,6 +218,7 @@ pub fn to_rgb565(frames: &[SourceFrame]) -> Vec<Vec<u8>> {
 }
 
 /// Parse `#RRGGBB` / `#RGB` into RGBA.
+#[allow(dead_code)]
 pub fn parse_colour(value: &str) -> Result<[u8; 4], String> {
     let hex = value.trim().trim_start_matches('#');
     let expand = |s: &str| u8::from_str_radix(s, 16).map_err(|_| format!("bad colour {value:?}"));

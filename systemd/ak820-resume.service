@@ -1,6 +1,6 @@
 [Unit]
 Description=Resync the AK820 Pro clock after resume
-Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-app
+Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk
 After=suspend.target hibernate.target hybrid-sleep.target
 
 [Service]

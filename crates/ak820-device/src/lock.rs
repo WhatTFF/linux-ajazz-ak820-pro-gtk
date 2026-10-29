@@ -4,7 +4,7 @@ use std::fs::{File, OpenOptions};
 use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 
-use crate::{Error, sys};
+use crate::{sys, Error};
 
 /// An exclusive, non-blocking `flock` on `$XDG_RUNTIME_DIR/ak820.lock`.
 ///

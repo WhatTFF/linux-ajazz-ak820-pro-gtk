@@ -1,6 +1,6 @@
 [Unit]
 Description=Sync the AK820 Pro screen clock
-Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-app
+Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk
 After=suspend.target hibernate.target hybrid-sleep.target
 
 [Service]

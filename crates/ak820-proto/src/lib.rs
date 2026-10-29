@@ -15,13 +15,13 @@ mod packet;
 mod payload;
 mod rgb565;
 
-pub use clock::{CivilTime, clock_payload, weekday_from_ymd};
+pub use clock::{clock_payload, weekday_from_ymd, CivilTime};
 pub use error::Error;
-pub use info::{DeviceInfo, parse_info};
+pub use info::{parse_info, DeviceInfo};
 pub use packet::{
-    Command, HEADER_LEN, MAGIC_DEVICE, MAGIC_HOST, Reply, command_packet, upload_packet,
+    command_packet, upload_packet, Command, Reply, HEADER_LEN, MAGIC_DEVICE, MAGIC_HOST,
 };
-pub use payload::{Frame, FrameOwned, build_payload, parse_payload, payload_len};
+pub use payload::{build_payload, parse_payload, payload_len, Frame, FrameOwned};
 pub use rgb565::{from_rgba, to_rgba};
 
 /// USB vendor id (Sonix).

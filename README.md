@@ -36,8 +36,9 @@ packages above plus a `SHA256SUMS` file; the newest release is listed first.
 | `.AppImage` | any glibc distro, no root | `chmod +x ak820-gtk_*.AppImage && ./ak820-gtk_*.AppImage` |
 | source | any | `cargo build --release -p ak820-gtk -p ak820-cli` |
 
-All three need **GTK 3** at runtime (ships with Fedora Workstation and Ubuntu 22.04+). Install
-the udev rule once so a normal user can open the keyboard:
+All three need **GTK 3** at runtime (ships with Fedora Workstation and Ubuntu 22.04+). Video
+files additionally need `ffmpeg` on `PATH`. Install the udev rule once so a normal user can open
+the keyboard:
 
 ```bash
 sudo install -Dm644 udev/70-ak820.rules /usr/lib/udev/rules.d/70-ak820.rules
@@ -51,11 +52,17 @@ Then unplug and replug the keyboard so the new permissions apply.
 Working on hardware (fw 1.07, PID `0c45:8009`):
 
 - `ak820ctl` — `info`, `time`, `upload`, `builtin`, `history list|export|restore|clear`, `raw`
-- `ak820-gtk` — GTK3 window: device info, clock sync, built-in animations, image/GIF upload with
-  live preview and progress bar, upload history, settings
-- **Settings**: start at login, start minimized, minimize to tray, sync on start, sync on connect,
-  restore last image on connect, autosync interval, update checks
-- clock autosync units (`systemd/`), udev rule, DEB + AppImage packages
+- `ak820-gtk` — GTK3 window: device info, clock sync, built-in animations, image/GIF/video upload
+  with live preview and progress bar, drag & drop, clipboard paste, GIPHY search, upload history
+  with per-entry delete and clear-all
+- **Tray** — StatusNotifierItem / AppIndicator icon with **Open**, **Sync clock now** and **Quit**
+- **Settings**: start at login (`~/.config/autostart`), start minimized, minimize to tray, sync on
+  start and every 12 h, sync on connect, restore last image on connect, extra sync interval,
+  optional `ak820-clock.timer` hint, automatic update checks, manual update download/install,
+  uninstall, GIPHY API key
+- **Updates** — checks GitHub releases, downloads RPM/DEB/AppImage, installs through `pkexec`
+  (RPM/DEB), replaces the running AppImage, or offers the exact terminal command
+- clock autosync units (`systemd/`), udev rule, DEB + RPM + AppImage packages
 
 Not done yet: Flatpak, COPR, GIPHY key in the keyring, SQLite-backed history. See the upstream
 project's [PLAN.md](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app/blob/main/PLAN.md).
@@ -64,6 +71,8 @@ project's [PLAN.md](https://github.com/WhatTFF/linux-ajazz-ak820-pro-app/blob/ma
 
 ```bash
 sudo dnf install gtk3-devel gdk3-devel glib2-devel cargo rust gcc gcc-c++ pkgconf-pkg-config
+# optional, for video files:
+sudo dnf install ffmpeg
 cargo build --release -p ak820-gtk -p ak820-cli
 
 sudo install -Dm755 target/release/ak820-gtk /usr/local/bin/
@@ -85,9 +94,9 @@ ak820ctl time                 # push the clock once
 
 Two ways, pick one:
 
-- **In the app** (default): ⚙ Settings → autosync clock. The clock is pushed when
-  the app opens, then every 60 s while it runs (only when the keyboard is present;
-  silent when it is not).
+- **In the app** (default): ⚙ Settings → Clock. The clock is pushed when the app starts,
+  when the keyboard connects, every 12 hours, and on demand with **Sync clock now** (device
+  panel, Settings or tray). An optional extra interval can re-sync more often (minimum 10 s).
 - **With systemd**: the units below, for machines where the app is not running.
 
 ```bash

@@ -8,7 +8,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use ak820_device::{Device, DeviceLock};
-use ak820_proto::{CivilTime, Frame, MAX_FRAMES, build_payload, parse_payload};
+use ak820_proto::{build_payload, parse_payload, CivilTime, Frame, MAX_FRAMES};
 use chrono::{Datelike, Timelike};
 use clap::{Parser, Subcommand};
 use decode::Fit;
@@ -405,8 +405,8 @@ fn cmd_history(command: HistoryCmd) -> Result<(), String> {
 }
 
 fn export_gif(payload: &[u8], out: &Path) -> Result<(), String> {
-    use image::Delay;
     use image::codecs::gif::{GifEncoder, Repeat};
+    use image::Delay;
 
     let frames = parse_payload(payload, usize::MAX).map_err(|e| e.to_string())?;
     let file = std::fs::File::create(out).map_err(|e| format!("{}: {e}", out.display()))?;

@@ -6,9 +6,9 @@ use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-use ak820_proto::{HEADER_LEN, MAGIC_DEVICE, Reply, command_packet};
+use ak820_proto::{command_packet, Reply, HEADER_LEN, MAGIC_DEVICE};
 
-use crate::{Error, IfaceInfo, sys};
+use crate::{sys, Error, IfaceInfo};
 
 const READ_BUF: usize = 8192;
 

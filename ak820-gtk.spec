@@ -3,7 +3,7 @@
 %global _build_id_links none
 
 Name:           ak820-gtk
-Version:        0.1.0
+Version:        0.2.1
 Release:        1.beta%{?dist}
 Summary:        GTK3 control app for the AJAZZ / Epomaker AK820 Pro TFT screen
 
@@ -36,11 +36,11 @@ install -Dm755 target/release/ak820ctl   %{buildroot}%{_bindir}/ak820ctl
 
 install -Dm644 udev/70-ak820.rules %{buildroot}/usr/lib/udev/rules.d/70-ak820.rules
 
-install -d %{buildroot}%{_unitdir}
-install -m644 systemd/ak820-clock.service %{buildroot}%{_unitdir}/ak820-clock.service
-install -m644 systemd/ak820-clock.timer %{buildroot}%{_unitdir}/ak820-clock.timer
-install -m644 systemd/ak820-connect.service %{buildroot}%{_unitdir}/ak820-connect.service
-install -m644 systemd/ak820-resume.service %{buildroot}%{_unitdir}/ak820-resume.service
+install -d %{buildroot}%{_userunitdir}
+install -m644 systemd/ak820-clock.service %{buildroot}%{_userunitdir}/ak820-clock.service
+install -m644 systemd/ak820-clock.timer %{buildroot}%{_userunitdir}/ak820-clock.timer
+install -m644 systemd/ak820-connect.service %{buildroot}%{_userunitdir}/ak820-connect.service
+install -m644 systemd/ak820-resume.service %{buildroot}%{_userunitdir}/ak820-resume.service
 
 install -Dm644 packaging/linux/ak820-gtk.desktop %{buildroot}%{_datadir}/applications/ak820-gtk.desktop
 install -Dm644 packaging/linux/ak820-gtk.png %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/ak820-gtk.png
@@ -61,10 +61,10 @@ rm -rf %{buildroot}
 %{_bindir}/ak820-gtk
 %{_bindir}/ak820ctl
 /usr/lib/udev/rules.d/70-ak820.rules
-%{_unitdir}/ak820-clock.service
-%{_unitdir}/ak820-clock.timer
-%{_unitdir}/ak820-connect.service
-%{_unitdir}/ak820-resume.service
+%{_userunitdir}/ak820-clock.service
+%{_userunitdir}/ak820-clock.timer
+%{_userunitdir}/ak820-connect.service
+%{_userunitdir}/ak820-resume.service
 %{_datadir}/applications/ak820-gtk.desktop
 %{_datadir}/icons/hicolor/256x256/apps/ak820-gtk.png
 %{_datadir}/licenses/ak820-gtk/LICENSE
@@ -74,5 +74,10 @@ rm -rf %{buildroot}
 %{_datadir}/doc/ak820-gtk/UPSTREAM.md
 
 %changelog
+* Thu Oct 29 2026 Emin G. <emin.by@outlook.com> - 0.2.0-beta-1
+- Reworked GTK3 UI: dark cards, reference layout, system fonts, working
+  effects and animations, fixed sidebar, responsive wide-screen layout,
+  background keep-running mode.
+
 * Wed Oct 28 2026 Emin G. <emin.by@outlook.com> - 0.1.0-beta-1
 - Initial GTK3 release

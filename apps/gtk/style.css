@@ -1,0 +1,237 @@
+/* AK820 Screen Studio — GTK3 theme matching the upstream web UI.
+   Palette: bg #121211, panel #1b1b19, field #232320, line #2e2d2a,
+   ink #edebe5, muted #a09d94, faint #6b6860, accent #ff7b3a. */
+
+window.ak820 {
+  background-color: #121211;
+  color: #edebe5;
+  font-family: "Cantarell", "Inter", "Noto Sans", "DejaVu Sans", sans-serif;
+  font-size: 15px;
+}
+
+label { color: #edebe5; }
+label.muted { color: #a09d94; }
+label.faint { color: #6b6860; font-size: 13px; }
+label.brand-title { font-size: 23px; font-weight: 700; color: #edebe5; }
+label.brand-sub { font-size: 15px; color: #a09d94; }
+label.section-title { font-size: 12px; font-weight: 700; color: #a09d94; }
+label.glabel { font-size: 13px; color: #a09d94; }
+label.ctl-label { font-size: 13px; color: #a09d94; }
+label.ctl-value { font-size: 12px; color: #edebe5; font-family: monospace; }
+label.gen-name { font-size: 12px; color: #edebe5; }
+label.msg { font-size: 13px; color: #a09d94; }
+label.msg.ok { color: #69db7c; }
+label.msg.err { color: #ff6b6b; }
+label.pill-text { font-size: 13px; color: #a09d94; }
+label.hitem-name { font-size: 12px; color: #edebe5; font-weight: 600; }
+label.hitem-cap { font-size: 12px; color: #a09d94; }
+
+box.vertical, box.horizontal { background-color: transparent; }
+
+/* ---------- header ---------- */
+headerbar.app-titlebar {
+  background-color: #1b1b19;
+  background-image: none;
+  border-bottom: 1px solid #2e2d2a;
+  box-shadow: none;
+}
+headerbar.app-titlebar:backdrop { background-color: #1b1b19; }
+label.titlebar-title { font-size: 13px; color: #a09d94; font-weight: 500; }
+box.pill {
+  background-color: #1b1b19;
+  border: 1px solid #2e2d2a;
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+label.pill-dot { font-size: 13px; color: #6b6860; }
+label.pill-dot.ok { color: #69db7c; }
+label.pill-dot.err { color: #ff6b6b; }
+label.pill-dot.busy { color: #ffa94d; }
+
+/* ---------- buttons ---------- */
+button {
+  background-image: none;
+  background-color: #232320;
+  border: 1px solid #2e2d2a;
+  border-radius: 8px;
+  color: #edebe5;
+  padding: 7px 12px;
+  min-height: 20px;
+  box-shadow: none;
+  text-shadow: none;
+}
+button:hover { border-color: #6b6860; background-color: #262623; }
+button:active, button:checked { background-color: #2a2a27; }
+button:disabled { opacity: 0.45; }
+button:focus { border-color: #ff7b3a; }
+button.primary {
+  background-color: #ff7b3a;
+  border-color: #ff7b3a;
+  color: #1a0b02;
+  font-weight: 700;
+}
+button.primary:hover { background-color: #ff8c52; border-color: #ff8c52; }
+button.primary:active { background-color: #e8590c; border-color: #e8590c; }
+button.primary:disabled { opacity: 0.5; }
+button.connect { padding: 4px 13px; min-height: 16px; }
+button.big { padding: 11px; font-size: 16px; font-weight: 700; }
+button.icon { padding: 4px 10px; font-size: 15px; }
+button.tiny { padding: 4px 10px; font-size: 13px; }
+
+button.seg-btn { border-radius: 8px; padding: 6px 9px; }
+button.seg-btn:checked {
+  border-color: #ff7b3a;
+  color: #ff7b3a;
+  background-color: #232320;
+  font-weight: 700;
+}
+
+button.chip { border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 500; }
+button.chip:checked {
+  border-color: #ff7b3a;
+  color: #ff7b3a;
+  background-color: rgba(255, 123, 58, 0.12);
+  font-weight: 700;
+}
+
+button.tab {
+  border: 0;
+  background-color: transparent;
+  border-radius: 7px;
+  padding: 7px 8px;
+  color: #a09d94;
+  font-weight: 500;
+  box-shadow: none;
+}
+button.tab:hover { color: #edebe5; background-color: #262623; }
+button.tab:checked {
+  background-color: #1b1b19;
+  color: #edebe5;
+  font-weight: 700;
+}
+
+button.gen-card {
+  background-color: #232320;
+  border: 1px solid #2e2d2a;
+  border-radius: 10px;
+  padding: 5px;
+}
+button.gen-card:hover { border-color: #6b6860; }
+button.gen-card:checked {
+  border-color: #ff7b3a;
+  box-shadow: 0 0 0 1px #ff7b3a;
+  background-color: #232320;
+  color: #edebe5;
+}
+button.gen-card:checked label { font-weight: 700; }
+
+button.hitem {
+  background-color: #232320;
+  border: 1px solid #2e2d2a;
+  border-radius: 10px;
+  padding: 6px;
+}
+button.hitem:hover { border-color: #6b6860; }
+
+button.drop {
+  border: 2px dashed #2e2d2a;
+  border-radius: 12px;
+  background-color: #1b1b19;
+  padding: 28px 16px;
+  color: #a09d94;
+  font-weight: 400;
+}
+button.drop:hover { border-color: #ff7b3a; color: #edebe5; background-color: rgba(255,123,58,0.06); }
+
+/* ---------- cards ---------- */
+box.card {
+  background-color: #1b1b19;
+  border: 1px solid #2e2d2a;
+  border-radius: 14px;
+}
+box.kb {
+  background-image: linear-gradient(to bottom, #2a2a2c, #19191a);
+  border-radius: 18px;
+  border: 1px solid #26262a;
+}
+box.bezel {
+  background-color: #050505;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px #333333, 0 0 0 4px #0e0e0f;
+}
+box.tabs {
+  background-color: #232320;
+  border: 1px solid #2e2d2a;
+  border-radius: 10px;
+}
+box.canvas-wrap {
+  background-color: #000000;
+  border: 1px solid #2e2d2a;
+  border-radius: 8px;
+}
+
+/* ---------- fields ---------- */
+entry, textview, textview text {
+  background-color: #232320;
+  border: 1px solid #2e2d2a;
+  border-radius: 8px;
+  color: #edebe5;
+  padding: 7px 10px;
+  caret-color: #ff7b3a;
+}
+entry:focus, textview:focus { border-color: #ff7b3a; }
+entry placeholder { color: #6b6860; }
+textview border { border-width: 0; }
+
+combobox button {
+  background-color: #232320;
+  border: 1px solid #2e2d2a;
+  border-radius: 8px;
+  color: #edebe5;
+  padding: 6px 10px;
+  box-shadow: none;
+  background-image: none;
+}
+combobox button:hover { border-color: #6b6860; }
+
+colorbutton button { padding: 2px; min-width: 40px; min-height: 32px; }
+colorbutton colorswatch { border-radius: 5px; border: 1px solid #2e2d2a; }
+
+/* ---------- sliders ---------- */
+scale { min-height: 24px; color: #edebe5; }
+scale trough {
+  background-color: #2e2d2a;
+  border: none;
+  border-radius: 999px;
+  min-height: 6px;
+}
+scale highlight { background-color: #ff7b3a; border-radius: 999px; }
+scale slider {
+  background-color: #edebe5;
+  border: none;
+  border-radius: 999px;
+  min-width: 15px;
+  min-height: 15px;
+  margin: -5px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+scale slider:hover { background-color: #ffffff; }
+
+progressbar { min-height: 6px; }
+progressbar trough { background-color: #2e2d2a; border-radius: 999px; min-height: 6px; border: none; }
+progressbar progress { background-color: #ff7b3a; border-radius: 999px; min-height: 6px; }
+
+separator { background-color: #2e2d2a; min-height: 1px; }
+
+scrollbar { background-color: transparent; }
+scrollbar slider { background-color: #2e2d2a; border-radius: 999px; min-width: 8px; min-height: 8px; }
+scrollbar slider:hover { background-color: #6b6860; }
+
+scrolledwindow, viewport { background-color: transparent; }
+
+flowbox { background-color: transparent; }
+
+dialog { background-color: #1b1b19; color: #edebe5; }
+dialog .dialog-vbox { background-color: #1b1b19; }
+dialog label { color: #edebe5; }
+dialog checkbutton { color: #edebe5; }

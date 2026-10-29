@@ -1,4 +1,9 @@
 /target/
+/dist/
+/AppDir/
+/rpmbuild/
+/pkg/
+/squashfs-root/
 **/*.rs.bak
 *.swp
 *~

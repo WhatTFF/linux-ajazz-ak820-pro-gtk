@@ -1,6 +1,6 @@
 [Unit]
 Description=AK820 Pro just connected: sync clock and restore the last image
-Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-app
+Documentation=https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk
 # Started by udev (ENV{SYSTEMD_USER_WANTS}) when the keyboard appears.
 After=graphical-session.target
 
