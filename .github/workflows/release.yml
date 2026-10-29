@@ -39,9 +39,9 @@ jobs:
           version="${TAG#v}"
           rpm_version="${version%%-*}"
           mkdir -p rpmbuild/SOURCES
-          git archive --format=tar.gz \
-            --prefix="ak820-gtk-${rpm_version}/" \
-            -o "rpmbuild/SOURCES/ak820-gtk-${rpm_version}.tar.gz" HEAD
+          tar --exclude='./.git' --exclude='./target' --exclude='./rpmbuild' \
+            --transform "s,^\.,ak820-gtk-${rpm_version}," \
+            -czf "rpmbuild/SOURCES/ak820-gtk-${rpm_version}.tar.gz" .
           rpmbuild -bb \
             --define "_topdir $PWD/rpmbuild" \
             --define "_sourcedir $PWD/rpmbuild/SOURCES" \
