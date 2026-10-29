@@ -47,11 +47,12 @@ jobs:
             --define "_sourcedir $PWD/rpmbuild/SOURCES" \
             --define "dist .fc45" \
             ak820-gtk.spec
+          cp rpmbuild/RPMS/x86_64/ak820-gtk-[0-9]*.rpm .
 
       - uses: actions/upload-artifact@v4
         with:
           name: rpm
-          path: rpmbuild/RPMS/**/ak820-gtk-[0-9]*.rpm
+          path: ak820-gtk-[0-9]*.rpm
           if-no-files-found: error
 
   deb:
