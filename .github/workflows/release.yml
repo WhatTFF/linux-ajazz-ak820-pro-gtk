@@ -191,6 +191,7 @@ jobs:
       - name: Publish prerelease
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -e
