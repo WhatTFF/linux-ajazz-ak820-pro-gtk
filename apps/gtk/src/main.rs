@@ -581,13 +581,18 @@ fn main() {
     // The tray indicator must exist before the window is hidden, otherwise a
     // start-minimized launch would be unreachable on desktop environments
     // without another way to restore it.
-    let _tray = build_tray(&w);
+    let tray_offline = Arc::new(AtomicBool::new(false));
+    let _tray = build_tray(&w, Arc::clone(&tray_offline));
     let has_tray = _tray.is_some();
 
     // Closing hides the window when "keep running" is enabled and a tray icon
     // exists to reopen it. Without one, quit so the app is never lost.
+    let tray_offline_close = Arc::clone(&tray_offline);
     window.connect_delete_event(move |win, _| {
-        if has_tray && settings::Settings::load().minimize_to_tray {
+        if has_tray
+            && !tray_offline_close.load(Ordering::Relaxed)
+            && settings::Settings::load().minimize_to_tray
+        {
             win.hide();
             eprintln!("AK820 Screen Studio is still running. Use the tray icon to reopen it.");
             Inhibit(true)
@@ -625,6 +630,24 @@ fn main() {
     w.sync_btn.set_sensitive(false);
     if (initial.start_minimized || tray_flag) && has_tray {
         window.hide();
+
+        // At login the app can start before the desktop's StatusNotifier
+        // watcher is up. The tray service now waits for it, but if it never
+        // appears the hidden window would be unreachable, so show it.
+        let w2 = w.clone();
+        let offline = Arc::clone(&tray_offline);
+        glib::timeout_add_seconds_local(6, move || {
+            if !w2.window.get_visible() && offline.load(Ordering::Relaxed) {
+                eprintln!("no tray icon available here; showing the window instead");
+                set_msg(
+                    &w2,
+                    "No tray icon is available here, so the window was shown.",
+                    "",
+                );
+                show_window(&w2.window);
+            }
+            Continue(false)
+        });
     }
 
     // Populate the keyboard panel automatically when a device is already there.
@@ -638,22 +661,10 @@ fn main() {
         });
     }
 
-    // Sync once at start, then let the 12-hour watcher take over.
+    // Push the clock a few times at start: the keyboard or its dongle may
+    // still be settling in right after boot, so one attempt can miss.
     if initial.sync_on_start {
-        let w2 = w.clone();
-        let quit_after = initial.quit_after_start_sync;
-        glib::timeout_add_local(1500, move || {
-            spawn_clock_sync(
-                &w2,
-                true,
-                Some(std::boxed::Box::new(move |_| {
-                    if quit_after {
-                        gtk::main_quit();
-                    }
-                })),
-            );
-            Continue(false)
-        });
+        start_boot_sync(&w, initial.quit_after_start_sync);
     }
 
     schedule_update_check(&w);
@@ -2013,6 +2024,45 @@ fn sync_time() -> Result<String, String> {
     Err(last)
 }
 
+/// How many times the clock is pushed on startup, and the gap between tries.
+const BOOT_SYNCS: u32 = 3;
+const BOOT_SYNC_GAP_MS: u32 = 500;
+
+/// Push the clock `BOOT_SYNCS` times, `BOOT_SYNC_GAP_MS` apart. Right after
+/// boot the keyboard (or its dongle) may still be enumerating, so one attempt
+/// is not always enough.
+fn start_boot_sync(w: &Widgets, quit_after: bool) {
+    let attempt = Rc::new(Cell::new(0u32));
+    let w2 = w.clone();
+    glib::timeout_add_local(1500, move || {
+        run_boot_sync(&w2, Rc::clone(&attempt), quit_after);
+        Continue(false)
+    });
+}
+
+fn run_boot_sync(w: &Widgets, attempt: Rc<Cell<u32>>, quit_after: bool) {
+    let done = Rc::clone(&attempt);
+    let w2 = w.clone();
+    spawn_clock_sync(
+        w,
+        true,
+        Some(std::boxed::Box::new(move |_| {
+            let n = done.get() + 1;
+            done.set(n);
+            if n < BOOT_SYNCS {
+                let w3 = w2.clone();
+                let next = Rc::clone(&done);
+                glib::timeout_add_local(BOOT_SYNC_GAP_MS, move || {
+                    run_boot_sync(&w3, Rc::clone(&next), quit_after);
+                    Continue(false)
+                });
+            } else if quit_after {
+                gtk::main_quit();
+            }
+        })),
+    );
+}
+
 /// Run a sync off the UI thread and report the result on the main thread.
 fn spawn_clock_sync(w: &Widgets, background: bool, done: Option<SyncDone>) {
     if w.app.sync_busy.get() {
@@ -2097,6 +2147,8 @@ enum TrayCmd {
 
 struct Tray {
     tx: mpsc::Sender<TrayCmd>,
+    /// `true` while no StatusNotifier watcher owns the tray name.
+    offline: Arc<AtomicBool>,
 }
 
 /// The bundled PNG as an ARGB32 pixmap for StatusNotifierItem.
@@ -2160,14 +2212,28 @@ impl ksni::Tray for Tray {
             item("Quit", TrayCmd::Quit),
         ]
     }
+
+    fn watcher_offline(&self, reason: ksni::OfflineReason) -> bool {
+        eprintln!("tray: StatusNotifierWatcher offline ({reason:?}), waiting for it");
+        self.offline.store(true, Ordering::Relaxed);
+        // Keep the service alive: the watcher may appear a moment after login.
+        true
+    }
+
+    fn watcher_online(&self) {
+        self.offline.store(false, Ordering::Relaxed);
+    }
 }
 
 /// Build the StatusNotifierItem (the AppIndicator protocol) and pump its menu
 /// actions on the GTK main thread. The returned handle must stay alive.
-fn build_tray(w: &Widgets) -> Option<ksni::blocking::Handle<Tray>> {
+fn build_tray(w: &Widgets, offline: Arc<AtomicBool>) -> Option<ksni::blocking::Handle<Tray>> {
     use ksni::blocking::TrayMethods;
     let (tx, rx) = mpsc::channel();
-    let handle = match (Tray { tx }).spawn() {
+    // Autostart can race the desktop session: the StatusNotifier watcher is
+    // often not on D-Bus yet when the app launches. Keep the service alive and
+    // register as soon as the watcher shows up instead of failing for good.
+    let handle = match (Tray { tx, offline }).assume_sni_available(true).spawn() {
         Ok(handle) => handle,
         Err(e) => {
             eprintln!("tray icon unavailable: {e}");
@@ -4458,8 +4524,9 @@ fn open_settings(w: &Widgets) {
     let sync_start = gtk::CheckButton::with_label("Sync the clock when the app starts");
     sync_start.set_active(s.sync_on_start);
     let clock_hint = mk_label(
-        "The app pushes the clock when it opens (cold start or restored from the tray), \
-         then again every 12 hours while it runs.",
+        "The app pushes the clock three times when it opens (half a second apart, so a \
+         keyboard that is still waking up at boot is caught), then again every 12 hours \
+         while it runs.",
         "faint",
     );
     clock_hint.set_line_wrap(true);

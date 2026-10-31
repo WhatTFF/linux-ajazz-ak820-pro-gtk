@@ -25,7 +25,7 @@ If applicable, add media to help explain your problem.
 **Environment (please complete the following):**
 - Distribution and version: [e.g. Fedora 45]
 - Desktop and display server: [e.g. GNOME 49, Wayland]
-- App version: [e.g. 0.2.2-beta]
+- App version: [e.g. 1.0.0]
 - Keyboard model and PID: [e.g. AK820 Pro, 0c45:8009]
 - Firmware: [e.g. 1.07]
 - Connection: [wired USB-C / 2.4 GHz dongle / Bluetooth]

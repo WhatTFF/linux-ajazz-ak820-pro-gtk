@@ -3,8 +3,8 @@
 %global _build_id_links none
 
 Name:           ak820-gtk
-Version:        0.2.2
-Release:        1.beta%{?dist}
+Version:        1.0.0
+Release:        1%{?dist}
 Summary:        GTK3 control app for the AJAZZ / Epomaker AK820 Pro TFT screen
 
 License:        GPL-3.0-only
@@ -76,6 +76,13 @@ rm -rf %{buildroot}
 %{_datadir}/doc/ak820-gtk/UPSTREAM.md
 
 %changelog
+* Sat Oct 31 2026 Emin G. <emin.by@outlook.com> - 1.0.0-1
+- First stable release. The app starts hidden in the tray reliably at login
+  even when the desktop's StatusNotifier watcher appears late, and the clock
+  is pushed three times on startup so a keyboard still waking up at boot is
+  caught. Includes everything from the 0.2.x series: GTK3 screen studio,
+  clock autosync, tray, history, GIPHY search and in-app updates.
+
 * Thu Oct 29 2026 Emin G. <emin.by@outlook.com> - 0.2.0-beta-1
 - Reworked GTK3 UI: dark cards, reference layout, system fonts, working
   effects and animations, fixed sidebar, responsive wide-screen layout,

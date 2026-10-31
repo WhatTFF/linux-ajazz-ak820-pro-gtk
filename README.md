@@ -1,7 +1,7 @@
 # AK820 Screen Studio
 
 [![CI](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/actions/workflows/ci.yml/badge.svg)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/WhatTFF/linux-ajazz-ak820-pro-gtk?include_prereleases&label=release&color=ff6a2b)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
+[![Release](https://img.shields.io/github/v/release/WhatTFF/linux-ajazz-ak820-pro-gtk?label=release&color=ff6a2b)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Platform: Linux x86_64](https://img.shields.io/badge/platform-Linux%20x86_64-lightgrey.svg)](#download)
 
@@ -25,7 +25,7 @@ A Rust/GTK3 rewrite of [fromagge/ak820-screen](https://github.com/fromagge/ak820
 
 ## Download
 
-Prebuilt x86_64 packages are attached to every [release](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases):
+Prebuilt x86_64 packages are attached to every [release](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases) — **v1.0.0 is the first stable release**:
 
 [![Download the RPM](https://img.shields.io/badge/download-.rpm-294172?style=for-the-badge&logo=fedora&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)
 [![Download the DEB](https://img.shields.io/badge/download-.deb-A81D33?style=for-the-badge&logo=debian&logoColor=white)](https://github.com/WhatTFF/linux-ajazz-ak820-pro-gtk/releases)

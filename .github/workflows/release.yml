@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to release (e.g. v0.2.2-beta)"
+        description: "Existing tag to release (e.g. v1.0.0)"
         required: true
 
 permissions:
@@ -194,20 +194,23 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish prerelease
+      - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -e
+          version="${TAG#v}"
+          if [[ "$version" == *-* ]]; then is_pre=true; else is_pre=false; fi
           ls -lh dist
           (cd dist && sha256sum ak820-gtk-* ak820-gtk_* > SHA256SUMS)
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
+            gh release edit "$TAG" --prerelease="$is_pre" \
+              --title "AK820 Screen Studio $TAG"
           else
-            gh release create "$TAG" dist/* \
-              --prerelease \
+            gh release create "$TAG" dist/* --prerelease="$is_pre" \
               --generate-notes \
               --title "AK820 Screen Studio $TAG"
           fi
