@@ -111,7 +111,7 @@ Then flip the keyboard's mode switch to **wired**, plug in the **USB-C cable**, 
 **From source (Fedora):**
 
 ```bash
-sudo dnf install gtk3-devel gdk3-devel glib2-devel cargo rust gcc gcc-c++ pkgconf-pkg-config
+sudo dnf install gtk3-devel glib2-devel cargo rust gcc gcc-c++ pkgconf-pkg-config
 # optional, for video files:
 sudo dnf install ffmpeg
 

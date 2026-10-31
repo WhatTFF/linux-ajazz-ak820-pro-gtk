@@ -20,7 +20,7 @@ jobs:
           dnf install -y --setopt=install_weak_deps=False \
             git gcc gcc-c++ make pkgconf-pkg-config \
             rust cargo rustfmt clippy \
-            gtk3-devel gdk3-devel glib2-devel \
+            gtk3-devel glib2-devel \
             xorg-x11-server-Xvfb
 
       - uses: actions/checkout@v4
