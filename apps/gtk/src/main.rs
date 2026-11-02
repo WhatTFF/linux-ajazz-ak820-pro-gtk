@@ -2301,12 +2301,17 @@ fn restore_latest(w: &Widgets) {
 fn start_watchers(w: &Widgets) {
     let w2 = w.clone();
     let last = Cell::new(Some(ak820_device::presence()));
+    // A keyboard that is already attached when the app starts is a
+    // connection too, so treat the first sample as one.
+    let first_tick = Cell::new(true);
     glib::timeout_add_seconds_local(2, move || {
         let now = ak820_device::presence();
-        if last.get() == Some(now) {
+        let first = first_tick.replace(false);
+        if !first && last.get() == Some(now) {
             return Continue(true);
         }
         let appeared = last.get().is_some_and(|p| p.is_empty()) && !now.is_empty();
+        let connected_at_start = first && !now.is_empty();
         let disappeared = last.get().is_some_and(|p| !p.is_empty()) && now.is_empty();
         last.set(Some(now));
 
@@ -2326,16 +2331,18 @@ fn start_watchers(w: &Widgets) {
             return Continue(true);
         }
 
-        if appeared {
+        if appeared || connected_at_start {
             let s = settings::Settings::load();
-            if s.sync_on_connect {
+            // At a cold start sync_on_start already pushes the clock, so do
+            // not queue a second, duplicate sync for the same connection.
+            if s.sync_on_connect && !(connected_at_start && s.sync_on_start) {
                 let w3 = w2.clone();
                 glib::timeout_add_local(900, move || {
                     spawn_clock_sync(&w3, true, None);
                     Continue(false)
                 });
             }
-            if s.restore_on_connect {
+            if appeared && s.restore_on_connect {
                 restore_latest(&w2);
             }
         }
@@ -4523,14 +4530,17 @@ fn open_settings(w: &Widgets) {
     let (clock_card, clock_in) = group("Clock");
     let sync_start = gtk::CheckButton::with_label("Sync the clock when the app starts");
     sync_start.set_active(s.sync_on_start);
+    let sync_connect = gtk::CheckButton::with_label("Sync the clock when the keyboard connects");
+    sync_connect.set_active(s.sync_on_connect);
     let clock_hint = mk_label(
         "The app pushes the clock three times when it opens (half a second apart, so a \
-         keyboard that is still waking up at boot is caught), then again every 12 hours \
-         while it runs.",
+         keyboard that is still waking up at boot is caught) and once whenever the \
+         keyboard is plugged in, then again every 12 hours while it runs.",
         "faint",
     );
     clock_hint.set_line_wrap(true);
     clock_in.pack_start(&sync_start, false, false, 0);
+    clock_in.pack_start(&sync_connect, false, false, 0);
     clock_in.pack_start(&clock_hint, false, false, 0);
     area.pack_start(&clock_card, false, false, 0);
 
@@ -4588,6 +4598,7 @@ fn open_settings(w: &Widgets) {
             s.start_minimized = startmin.get_active();
             s.minimize_to_tray = tray.get_active();
             s.sync_on_start = sync_start.get_active();
+            s.sync_on_connect = sync_connect.get_active();
             s.autosync_clock = autosync.get_active();
             s.check_updates = updates.get_active();
             match s.save() {

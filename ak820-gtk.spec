@@ -3,7 +3,7 @@
 %global _build_id_links none
 
 Name:           ak820-gtk
-Version:        1.0.0
+Version:        1.0.1
 Release:        1%{?dist}
 Summary:        GTK3 control app for the AJAZZ / Epomaker AK820 Pro TFT screen
 
@@ -76,6 +76,12 @@ rm -rf %{buildroot}
 %{_datadir}/doc/ak820-gtk/UPSTREAM.md
 
 %changelog
+* Mon Nov 02 2026 Emin G. <emin.by@outlook.com> - 1.0.1-1
+- Clock sync on connection is now a visible setting ("Sync the clock when
+  the keyboard connects") and also runs when the keyboard is already
+  attached at app start. Avoids a duplicate sync when the start-up sync is
+  enabled as well.
+
 * Sat Oct 31 2026 Emin G. <emin.by@outlook.com> - 1.0.0-1
 - First stable release. The app starts hidden in the tray reliably at login
   even when the desktop's StatusNotifier watcher appears late, and the clock
